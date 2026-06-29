@@ -84,34 +84,54 @@ document.addEventListener('DOMContentLoaded', () => {
         downloadBtn.addEventListener('click', () => {
             if (!currentMarkdownReport) return;
             
-            const element = document.getElementById('pdf-content');
+            const originalElement = document.getElementById('pdf-content');
+            const clone = originalElement.cloneNode(true);
+            
+            // Modify the clone before passing it to html2pdf
+            const pdfHeader = document.createElement('div');
+            pdfHeader.innerHTML = `
+                <div style="text-align: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid #000;">
+                    <h1 style="font-size: 24pt; font-weight: bold; margin: 0; color: black;">Insight Engine</h1>
+                    <p style="font-size: 12pt; color: #555; margin: 5px 0 0 0;">Autonomous Financial Forecasting & Anomaly Detection</p>
+                </div>
+            `;
+            clone.insertBefore(pdfHeader, clone.firstChild);
+            
+            clone.style.backgroundColor = 'white';
+            clone.style.color = 'black';
+            clone.querySelectorAll('*').forEach(el => {
+                if (el.style) {
+                    el.style.color = 'black';
+                    el.style.textShadow = 'none';
+                }
+            });
+            
+            const extended = clone.querySelector('#pdf-extended-methodology');
+            if (extended) extended.style.display = 'block';
+            
+            const readMore = clone.querySelector('#read-more-container');
+            if (readMore) readMore.style.display = 'none';
+            
+            // Append off-screen so it has layout dimensions for html2canvas
+            clone.style.position = 'absolute';
+            clone.style.left = '-9999px';
+            clone.style.top = '0';
+            clone.style.width = '800px'; 
+            clone.style.padding = '40px';
+            clone.style.zIndex = '-1';
+            document.body.appendChild(clone);
+
             const opt = {
                 margin:       0.5,
                 filename:     `${currentTicker || 'analysis'}_report.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { 
-                    scale: 2,
-                    onclone: (clonedDoc) => {
-                        const pdfContent = clonedDoc.getElementById('pdf-content');
-                        if (pdfContent) {
-                            pdfContent.classList.add('pdf-export-mode');
-                            
-                            // Add a professional branding header to the top of the PDF
-                            const pdfHeader = clonedDoc.createElement('div');
-                            pdfHeader.innerHTML = `
-                                <div style="text-align: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid #000;">
-                                    <h1 style="font-size: 24pt; font-weight: bold; margin: 0;">Insight Engine</h1>
-                                    <p style="font-size: 12pt; color: #555; margin: 5px 0 0 0;">Autonomous Financial Forecasting & Anomaly Detection</p>
-                                </div>
-                            `;
-                            pdfContent.insertBefore(pdfHeader, pdfContent.firstChild);
-                        }
-                    }
-                },
+                html2canvas:  { scale: 2, useCORS: true },
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
             
-            html2pdf().set(opt).from(element).save();
+            html2pdf().set(opt).from(clone).save().then(() => {
+                document.body.removeChild(clone);
+            });
         });
     }
 
