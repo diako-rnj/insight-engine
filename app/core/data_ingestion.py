@@ -98,11 +98,11 @@ def _fetch_live(ticker: str, months: int) -> Series | None:
     return Series(
         ticker=ticker,
         dates=[d.strftime("%Y-%m-%d") for d in df.index],
-        open=[float(x) for x in df["Open"].to_list()],
-        high=[float(x) for x in df["High"].to_list()],
-        low=[float(x) for x in df["Low"].to_list()],
-        close=[float(x) for x in df["Close"].to_list()],
-        volume=[float(x) for x in df["Volume"].to_list()],
+        open=[float(x) for x in df["Open"].squeeze().to_list()],
+        high=[float(x) for x in df["High"].squeeze().to_list()],
+        low=[float(x) for x in df["Low"].squeeze().to_list()],
+        close=[float(x) for x in df["Close"].squeeze().to_list()],
+        volume=[float(x) for x in df["Volume"].squeeze().to_list()],
         source="live",
     )
 
