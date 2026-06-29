@@ -67,6 +67,41 @@
                 <div class="markdown-body" id="report-content">
                     <!-- Markdown rendered here -->
                 </div>
+                
+                <div class="markdown-body pdf-only" id="pdf-extended-methodology" style="display: none;">
+                    <hr style="margin: 2rem 0;">
+                    <h2>Deep Dive: Analytical Methodology</h2>
+                    <p>This report extends the executive summary with a comprehensive breakdown of the multi-agent orchestration pipeline and quantitative models used to evaluate the asset.</p>
+                    
+                    <h3>1. Data Ingestion & Integrity</h3>
+                    <p>The Insight Engine fetches high-fidelity Open, High, Low, Close, and Volume (OHLCV) data directly from live market feeds. To ensure data integrity, the pipeline employs fallback caching and strict type-checking at the boundary. The dataset spans the exact timeframe requested, capturing both macroeconomic drift and micro-level volatility.</p>
+
+                    <h3>2. Forecasting Engine: ARIMA + Prophet Ensemble</h3>
+                    <p>Our forecasting agent relies on a sophisticated ensemble method to project price action for the next 30 trading days.</p>
+                    <ul>
+                        <li><strong>ARIMA (Auto-Regressive Integrated Moving Average):</strong> Captures the asset's momentum and mean-reversion characteristics by analyzing its own lagged values.</li>
+                        <li><strong>Prophet:</strong> A robust additive model designed by Meta that excels at handling missing daily data and abrupt trend shifts.</li>
+                        <li><strong>Ensemble Synthesis:</strong> By blending both models, we neutralize their individual weaknesses. The 95% Confidence Interval (CI) represents the statistical certainty boundary—a wider band indicates higher expected market turbulence.</li>
+                    </ul>
+
+                    <h3>3. Anomaly Detection Systems</h3>
+                    <p>Financial anomalies often precede massive market movements. We deploy three independent algorithms to flag them:</p>
+                    <ul>
+                        <li><strong>Isolation Forests:</strong> An unsupervised machine learning algorithm that isolates outliers by randomly partitioning the dataset. Highly effective at detecting structural breaks in trading behavior.</li>
+                        <li><strong>Rolling Z-Scores:</strong> We calculate a rolling standard deviation of daily volume. Any volume spike exceeding predefined Z-score thresholds triggers a severity alert, indicating institutional accumulation or distribution.</li>
+                        <li><strong>Bollinger Band Breaches:</strong> We monitor price excursions beyond 2 standard deviations from the 20-day Simple Moving Average (SMA) to identify overbought or oversold exhaustion points.</li>
+                    </ul>
+
+                    <h3>4. Quantitative Risk Assessment</h3>
+                    <p>Raw returns are meaningless without risk context. The engine computes institutional-grade risk metrics:</p>
+                    <ul>
+                        <li><strong>Sharpe Ratio:</strong> Calculates the risk-adjusted return. A ratio above 1.0 indicates excellent returns relative to the volatility endured.</li>
+                        <li><strong>Value at Risk (VaR):</strong> Estimates the maximum expected loss over a set period at a 95% and 99% confidence level, providing a worst-case scenario floor.</li>
+                        <li><strong>Maximum Drawdown:</strong> The largest historical peak-to-trough drop in the asset's price, serving as a historical stress test.</li>
+                    </ul>
+
+                    <p><em>Note: The Insight Engine autonomously critiques its own models and will flag warnings if the forecast confidence falls below acceptable thresholds.</em></p>
+                </div>
             </div>
 
             <div class="results-footer">

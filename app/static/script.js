@@ -93,8 +93,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
             
+            const extendedMethodology = document.getElementById('pdf-extended-methodology');
+            if (extendedMethodology) {
+                extendedMethodology.style.display = 'block';
+            }
+            
             // New Promise-based usage:
-            html2pdf().set(opt).from(element).save();
+            html2pdf().set(opt).from(element).save().then(() => {
+                if (extendedMethodology) {
+                    extendedMethodology.style.display = 'none';
+                }
+            });
         });
     }
 });
