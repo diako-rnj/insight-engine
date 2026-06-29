@@ -9,7 +9,7 @@
 
 Insight Engine is a multi-agent AI system that translates plain-English parameters about a stock into a professional quantitative report. It features an interactive, classy web dashboard where users can query any stock ticker, and the system handles live data ingestion, mathematical forecasting, anomaly detection, and risk metrics. 
 
-It generates an accurate candlestick chart and drafts a fully formatted Markdown report that can be directly downloaded by the user.
+It generates an accurate candlestick chart and drafts a fully formatted executive report. Users can click "Read More" to expand a comprehensive analytical methodology deep-dive, or download a professional, legally-sound PDF report directly from the interface.
 
 > **Kaggle 5-Day AI Agents Capstone** — **Agents for Business** track  
 > **Team:** Martin & Kasra
@@ -28,7 +28,7 @@ The agent pipeline automatically:
 4. **Evaluates Risk:** Computes critical risk metrics including Sharpe ratio, VaR (95/99), max drawdown, beta, and volatility.
 5. **Generates Reports:** Drafts a clean Markdown report summarizing the findings.
 6. **Visualizes Results:** Renders a gorgeous, highly accurate Candlestick chart overlaid with the forecast and anomalies using `matplotlib`.
-7. **Downloads:** Provides a one-click local download of the generated `.md` report.
+7. **Professional PDF Export:** Provides a seamless, flash-free download of a comprehensive PDF report combining the chart, summary, and deep-dive methodology.
 
 ---
 
@@ -42,8 +42,8 @@ User Request (Web Dashboard)
                                                 ├ Anomaly     ├──► Critique ──► Report Writer
                                                 └ Risk        ┘                     │
                                                                                     ▼
-                                                                             Interactive UI
-                                                                         (Charts & Markdown Download)
+                                                                              Interactive Dark-Mode UI
+                                                                          (Charts & PDF Download)
 ```
 
 Each agent lives in `app/agents/`. The orchestration graph is defined in `app/agent.py`, the web interface is served via FastAPI in `app/server.py`, and the quantitative analytical logic is isolated in `app/core/`.
@@ -77,7 +77,9 @@ uvicorn app.server:app --reload
 Then, open your browser and navigate to:
 **http://127.0.0.1:8000**
 
-You'll be greeted by an interactive dashboard. Type in a ticker (e.g. `AAPL`), select your timeframe, and let the agents do the rest! You can download the generated report by clicking the **⬇️ Download Report** button on the results page.
+You'll be greeted by an interactive, matte-dark dashboard featuring smooth macOS-style loading indicators. Type in a ticker (e.g. `AAPL`), select your timeframe, and let the agents do the rest! 
+
+Once the analysis is complete, you can click **•••** to expand the deep-dive methodology, or click **Download PDF** to seamlessly export a professional, white-background, black-text report straight from your browser.
 
 ---
 
