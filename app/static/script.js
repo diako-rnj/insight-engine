@@ -84,42 +84,43 @@ document.addEventListener('DOMContentLoaded', () => {
         downloadBtn.addEventListener('click', () => {
             if (!currentMarkdownReport) return;
             
-            const originalElement = document.getElementById('pdf-content');
-            const clone = originalElement.cloneNode(true);
+            const element = document.getElementById('pdf-content');
             
-            // Modify the clone before passing it to html2pdf
+            // Create a dark overlay to hide the white-background transition
+            const overlay = document.createElement('div');
+            overlay.style.position = 'fixed';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100vw';
+            overlay.style.height = '100vh';
+            overlay.style.backgroundColor = 'var(--bg-color)';
+            overlay.style.zIndex = '9999';
+            overlay.style.display = 'flex';
+            overlay.style.flexDirection = 'column';
+            overlay.style.alignItems = 'center';
+            overlay.style.justifyContent = 'center';
+            overlay.innerHTML = '<div class="spinner"></div><p style="margin-top: 1rem; color: var(--text-main);">Generating Professional PDF...</p>';
+            document.body.appendChild(overlay);
+
+            // Temporarily mutate live DOM for perfect html2pdf capture
+            element.classList.add('pdf-export-mode');
+            
             const pdfHeader = document.createElement('div');
+            pdfHeader.id = 'temp-pdf-header';
             pdfHeader.innerHTML = `
                 <div style="text-align: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid #000;">
                     <h1 style="font-size: 24pt; font-weight: bold; margin: 0; color: black;">Insight Engine</h1>
                     <p style="font-size: 12pt; color: #555; margin: 5px 0 0 0;">Autonomous Financial Forecasting & Anomaly Detection</p>
                 </div>
             `;
-            clone.insertBefore(pdfHeader, clone.firstChild);
+            element.insertBefore(pdfHeader, element.firstChild);
             
-            clone.style.backgroundColor = 'white';
-            clone.style.color = 'black';
-            clone.querySelectorAll('*').forEach(el => {
-                if (el.style) {
-                    el.style.color = 'black';
-                    el.style.textShadow = 'none';
-                }
-            });
-            
-            const extended = clone.querySelector('#pdf-extended-methodology');
-            if (extended) extended.style.display = 'block';
-            
-            const readMore = clone.querySelector('#read-more-container');
-            if (readMore) readMore.style.display = 'none';
-            
-            // Append off-screen so it has layout dimensions for html2canvas
-            clone.style.position = 'absolute';
-            clone.style.left = '-9999px';
-            clone.style.top = '0';
-            clone.style.width = '800px'; 
-            clone.style.padding = '40px';
-            clone.style.zIndex = '-1';
-            document.body.appendChild(clone);
+            const extended = document.getElementById('pdf-extended-methodology');
+            let wasExtendedHidden = false;
+            if (extended && extended.style.display === 'none') {
+                wasExtendedHidden = true;
+                extended.style.display = 'block';
+            }
 
             const opt = {
                 margin:       0.5,
@@ -129,9 +130,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
             
-            html2pdf().set(opt).from(clone).save().then(() => {
-                document.body.removeChild(clone);
-            });
+            // Allow DOM to update before capturing
+            setTimeout(() => {
+                html2pdf().set(opt).from(element).save().then(() => {
+                    // Revert mutations
+                    element.classList.remove('pdf-export-mode');
+                    const tempHeader = document.getElementById('temp-pdf-header');
+                    if (tempHeader) tempHeader.remove();
+                    if (wasExtendedHidden && extended) {
+                        extended.style.display = 'none';
+                    }
+                    document.body.removeChild(overlay);
+                });
+            }, 300);
         });
     }
 
