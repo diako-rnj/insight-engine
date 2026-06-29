@@ -196,6 +196,21 @@ input[type="number"]:focus {
     transform: translateY(0);
 }
 
+.neutral-btn {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-main);
+    border: 1px solid var(--panel-border);
+    padding: 0.6rem 1.2rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.neutral-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: none;
+    transform: translateY(-1px);
+}
+
 /* Loading State */
 .hidden {
     display: none !important;
@@ -226,6 +241,14 @@ input[type="number"]:focus {
     margin-bottom: 2rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--panel-border);
+}
+
+.results-footer {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--panel-border);
+    display: flex;
+    justify-content: flex-start;
 }
 
 .results-header h2 {

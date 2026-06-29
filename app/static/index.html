@@ -55,7 +55,6 @@
             <header class="results-header">
                 <h2>Analysis Complete</h2>
                 <div class="badges">
-                    <button id="download-btn" class="btn secondary-btn" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-right: 10px;">📄 Download PDF Report</button>
                     <span class="badge badge-success" id="hitl-status">HITL: Dry Run</span>
                 </div>
             </header>
@@ -68,6 +67,17 @@
                 <div class="markdown-body" id="report-content">
                     <!-- Markdown rendered here -->
                 </div>
+            </div>
+
+            <div class="results-footer">
+                <button id="download-btn" class="btn neutral-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Download PDF</span>
+                </button>
             </div>
         </section>
     </main>
