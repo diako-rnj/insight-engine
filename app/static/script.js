@@ -150,7 +150,33 @@ document.addEventListener('DOMContentLoaded', () => {
     if (downloadMdBtn) {
         downloadMdBtn.addEventListener('click', () => {
             if (!currentMarkdownReport) return;
-            const blob = new Blob([currentMarkdownReport], { type: 'text/markdown' });
+            
+            let fullMarkdown = `# Insight Engine Report\n*Autonomous Financial Forecasting & Anomaly Detection*\n\n---\n\n`;
+            fullMarkdown += currentMarkdownReport;
+            
+            fullMarkdown += `\n\n---\n\n`;
+            fullMarkdown += `## Deep Dive: Analytical Methodology\n\n`;
+            fullMarkdown += `This report extends the executive summary with a comprehensive breakdown of the multi-agent orchestration pipeline and quantitative models used to evaluate the asset.\n\n`;
+            fullMarkdown += `### 1. Data Ingestion & Integrity\n`;
+            fullMarkdown += `The Insight Engine fetches high-fidelity Open, High, Low, Close, and Volume (OHLCV) data directly from live market feeds. To ensure data integrity, the pipeline employs fallback caching and strict type-checking at the boundary. The dataset spans the exact timeframe requested, capturing both macroeconomic drift and micro-level volatility.\n\n`;
+            fullMarkdown += `### 2. Forecasting Engine: ARIMA + Prophet Ensemble\n`;
+            fullMarkdown += `Our forecasting agent relies on a sophisticated ensemble method to project price action for the next 30 trading days.\n`;
+            fullMarkdown += `- **ARIMA (Auto-Regressive Integrated Moving Average):** Captures the asset's momentum and mean-reversion characteristics by analyzing its own lagged values.\n`;
+            fullMarkdown += `- **Prophet:** A robust additive model designed by Meta that excels at handling missing daily data and abrupt trend shifts.\n`;
+            fullMarkdown += `- **Ensemble Synthesis:** By blending both models, we neutralize their individual weaknesses. The 95% Confidence Interval (CI) represents the statistical certainty boundary—a wider band indicates higher expected market turbulence.\n\n`;
+            fullMarkdown += `### 3. Anomaly Detection Systems\n`;
+            fullMarkdown += `Financial anomalies often precede massive market movements. We deploy three independent algorithms to flag them:\n`;
+            fullMarkdown += `- **Isolation Forests:** An unsupervised machine learning algorithm that isolates outliers by randomly partitioning the dataset. Highly effective at detecting structural breaks in trading behavior.\n`;
+            fullMarkdown += `- **Rolling Z-Scores:** We calculate a rolling standard deviation of daily volume. Any volume spike exceeding predefined Z-score thresholds triggers a severity alert, indicating institutional accumulation or distribution.\n`;
+            fullMarkdown += `- **Bollinger Band Breaches:** We monitor price excursions beyond 2 standard deviations from the 20-day Simple Moving Average (SMA) to identify overbought or oversold exhaustion points.\n\n`;
+            fullMarkdown += `### 4. Quantitative Risk Assessment\n`;
+            fullMarkdown += `Raw returns are meaningless without risk context. The engine computes institutional-grade risk metrics:\n`;
+            fullMarkdown += `- **Sharpe Ratio:** Calculates the risk-adjusted return. A ratio above 1.0 indicates excellent returns relative to the volatility endured.\n`;
+            fullMarkdown += `- **Value at Risk (VaR):** Estimates the maximum expected loss over a set period at a 95% and 99% confidence level, providing a worst-case scenario floor.\n`;
+            fullMarkdown += `- **Maximum Drawdown:** The largest historical peak-to-trough drop in the asset's price, serving as a historical stress test.\n\n`;
+            fullMarkdown += `*Note: The Insight Engine autonomously critiques its own models and will flag warnings if the forecast confidence falls below acceptable thresholds.*\n`;
+            
+            const blob = new Blob([fullMarkdown], { type: 'text/markdown' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
