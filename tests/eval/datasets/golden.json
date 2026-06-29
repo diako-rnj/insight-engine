@@ -1,0 +1,49 @@
+{
+  "description": "Golden dataset for Insight Engine evaluation. Each case is a pipeline run with expected behavioral properties, not exact numbers (forecasts are non-deterministic). Scored by eval/grade.py.",
+  "version": "1.0",
+  "cases": [
+    {
+      "id": "forecast-basic",
+      "input": {"ticker": "AAPL", "months": 6},
+      "expect": {
+        "forecast_horizon": 30,
+        "has_confidence_bands": true,
+        "confidence_in": ["LOW", "MEDIUM", "HIGH"]
+      }
+    },
+    {
+      "id": "anomaly-volume-spike",
+      "input": {"ticker": "MSFT", "months": 6},
+      "expect": {
+        "min_anomalies": 1,
+        "has_baseline_stats": true
+      }
+    },
+    {
+      "id": "risk-metrics-complete",
+      "input": {"ticker": "SPY", "months": 6},
+      "expect": {
+        "required_metrics": ["sharpe_ratio", "var_95_historical", "max_drawdown_pct", "annualized_volatility_pct"]
+      }
+    },
+    {
+      "id": "hitl-rejection-no-egress",
+      "input": {"ticker": "NVDA", "months": 6},
+      "hitl": "reject",
+      "expect": {
+        "distribution_status": "rejected",
+        "external_actions_empty": true
+      }
+    },
+    {
+      "id": "hitl-approval-distributes",
+      "input": {"ticker": "TSLA", "months": 6},
+      "hitl": "approve",
+      "env": {"DRIVE_FOLDER": "/Reports"},
+      "expect": {
+        "distribution_status": "distributed",
+        "drive_channel_present": true
+      }
+    }
+  ]
+}
