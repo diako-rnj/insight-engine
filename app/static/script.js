@@ -95,6 +95,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         const pdfContent = clonedDoc.getElementById('pdf-content');
                         if (pdfContent) {
                             pdfContent.classList.add('pdf-export-mode');
+                            
+                            // Add a professional branding header to the top of the PDF
+                            const pdfHeader = clonedDoc.createElement('div');
+                            pdfHeader.innerHTML = `
+                                <div style="text-align: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid #000;">
+                                    <h1 style="font-size: 24pt; font-weight: bold; margin: 0;">Insight Engine</h1>
+                                    <p style="font-size: 12pt; color: #555; margin: 5px 0 0 0;">Autonomous Financial Forecasting & Anomaly Detection</p>
+                                </div>
+                            `;
+                            pdfContent.insertBefore(pdfHeader, pdfContent.firstChild);
                         }
                     }
                 },
