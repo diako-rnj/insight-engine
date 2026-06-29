@@ -210,23 +210,12 @@ input[type="number"]:focus {
 .spinner {
     width: 40px;
     height: 40px;
-    border: 3px solid rgba(255,255,255,0.1);
-    border-top-color: var(--accent-primary);
     border-radius: 50%;
+    background: conic-gradient(from 180deg at 50% 50%, rgba(255, 255, 255, 0) 0deg, rgba(255, 255, 255, 0) 180deg, rgba(255, 255, 255, 1) 360deg);
+    mask: radial-gradient(transparent 55%, black 56%);
+    -webkit-mask: radial-gradient(transparent 55%, black 56%);
     animation: spin 1s linear infinite;
-    margin: 0 auto 1.5rem auto;
-}
-
-#loading-text {
-    font-weight: 500;
-    color: var(--text-main);
-    margin-bottom: 0.5rem;
-}
-
-.agent-trace {
-    font-family: monospace;
-    font-size: 0.85rem;
-    color: var(--text-muted);
+    margin: 0 auto;
 }
 
 /* Results Panel */

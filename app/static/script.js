@@ -3,7 +3,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const submitBtn = document.getElementById('submit-btn');
     const loadingState = document.getElementById('loading-state');
     const resultsPanel = document.getElementById('results-panel');
-    const agentTrace = document.getElementById('agent-trace');
     const reportContent = document.getElementById('report-content');
     const chartImage = document.getElementById('chart-image');
     
@@ -18,25 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
         loadingState.classList.remove('hidden');
         submitBtn.disabled = true;
         submitBtn.style.opacity = '0.5';
-        agentTrace.innerHTML = 'Connecting to Orchestrator...';
-
         const ticker = document.getElementById('ticker').value.toUpperCase();
         const months = document.getElementById('months').value;
-
-        // Simulate agent trace updates for better UX
-        const mockTraces = [
-            `ingest:yfinance:${months * 30}d`,
-            `analyze:ARIMA+Prophet:anom=...`,
-            `critique:evaluating...`
-        ];
-        
-        let traceIdx = 0;
-        const traceInterval = setInterval(() => {
-            if (traceIdx < mockTraces.length) {
-                agentTrace.innerHTML = `> ${mockTraces[traceIdx]}`;
-                traceIdx++;
-            }
-        }, 1500);
 
         try {
             // Build query params
@@ -53,15 +35,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const result = await response.json();
-            clearInterval(traceInterval);
             
             // Render the results
             renderResults(result, ticker);
 
         } catch (error) {
-            clearInterval(traceInterval);
-            agentTrace.innerHTML = `<span style="color: var(--danger)">Error: ${error.message}</span>`;
             console.error(error);
+            alert(`Error: ${error.message}`);
         } finally {
             // Re-enable button
             submitBtn.disabled = false;
