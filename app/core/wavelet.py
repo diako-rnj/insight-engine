@@ -3,6 +3,7 @@
 Pure-Python by default (PyWavelets, else a Haar fallback). A MATLAB hook is
 stubbed behind ``USE_MATLAB`` for the thesis extension and is never required.
 """
+
 from __future__ import annotations
 
 
@@ -35,7 +36,6 @@ def decompose(signal: list[float], levels: int = 3, use_matlab: bool = False) ->
         import pywt  # noqa: WPS433
 
         coeffs = pywt.wavedec(signal, "db4", level=levels)
-        return {"method": "pywt_db4",
-                "levels": [list(map(float, c)) for c in coeffs]}
+        return {"method": "pywt_db4", "levels": [list(map(float, c)) for c in coeffs]}
     except Exception:
         return {"method": "haar_fallback", "levels": _haar_levels(signal, levels)}

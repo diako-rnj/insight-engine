@@ -4,6 +4,7 @@ All sensitive values come from the environment. Nothing is hardcoded. Anything
 absent degrades gracefully: missing credentials disable the corresponding MCP
 distribution channel rather than crashing the pipeline.
 """
+
 from __future__ import annotations
 
 import os
@@ -19,7 +20,7 @@ class Config:
     """Runtime configuration resolved from environment variables."""
 
     # Data
-    use_live_data: bool = field(default_factory=lambda: _flag("USE_LIVE_DATA"))
+    use_live_data: bool = field(default_factory=lambda: _flag("USE_LIVE_DATA", default=True))
     cache_path: str = field(
         default_factory=lambda: os.getenv("CACHE_PATH", "app/data/snapshot.json")
     )
@@ -35,14 +36,24 @@ class Config:
     use_matlab: bool = field(default_factory=lambda: _flag("USE_MATLAB"))
 
     # Distribution / MCP
-    environment: str = field(default_factory=lambda: os.getenv("ENVIRONMENT", "development"))
-    gmail_recipient: str | None = field(default_factory=lambda: os.getenv("GMAIL_RECIPIENT"))
+    environment: str = field(
+        default_factory=lambda: os.getenv("ENVIRONMENT", "development")
+    )
+    gmail_recipient: str | None = field(
+        default_factory=lambda: os.getenv("GMAIL_RECIPIENT")
+    )
     drive_folder: str | None = field(default_factory=lambda: os.getenv("DRIVE_FOLDER"))
 
     # Storage
-    db_path: str = field(default_factory=lambda: os.getenv("DB_PATH", "artifacts/history.db"))
-    reports_dir: str = field(default_factory=lambda: os.getenv("REPORTS_DIR", "artifacts/reports"))
-    charts_dir: str = field(default_factory=lambda: os.getenv("CHARTS_DIR", "artifacts/charts"))
+    db_path: str = field(
+        default_factory=lambda: os.getenv("DB_PATH", "artifacts/history.db")
+    )
+    reports_dir: str = field(
+        default_factory=lambda: os.getenv("REPORTS_DIR", "artifacts/reports")
+    )
+    charts_dir: str = field(
+        default_factory=lambda: os.getenv("CHARTS_DIR", "artifacts/charts")
+    )
 
     # Risk-free rate for Sharpe (annualized, decimal)
     risk_free_rate: float = field(

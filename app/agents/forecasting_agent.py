@@ -1,4 +1,5 @@
 """Forecasting Agent — ARIMA + Prophet ensemble with confidence bands."""
+
 from __future__ import annotations
 
 from app.core.config import Config

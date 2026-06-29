@@ -6,6 +6,7 @@ environment variables, immediately before a tool call. Unresolved placeholders
 are left intact and flagged — they are never silently dropped, and real values
 never live in the agent's context window.
 """
+
 from __future__ import annotations
 
 import os
@@ -31,12 +32,18 @@ class ContextResolver:
 
     def resolve(self, value: str) -> str:
         """Replace ``[[VAR]]`` tokens. Logs resolution outcome for audit."""
+
         def _sub(match: re.Match) -> str:
             key = match.group(1)
             resolved = self.runtime_state.get(key) or os.getenv(key)
             self.audit_log.append(
-                {"key": key, "resolved": resolved is not None, "source":
-                 "state" if key in self.runtime_state else ("env" if os.getenv(key) else "none")}
+                {
+                    "key": key,
+                    "resolved": resolved is not None,
+                    "source": "state"
+                    if key in self.runtime_state
+                    else ("env" if os.getenv(key) else "none"),
+                }
             )
             # Leave unresolved placeholders visible rather than failing silently.
             return resolved if resolved is not None else match.group(0)

@@ -1,18 +1,22 @@
 # Insight Engine — runtime dependencies
 # Core analysis (the pipeline degrades gracefully if optional ones are absent)
-numpy==1.26.4
-pandas==2.2.2
-scipy==1.13.0
-statsmodels==0.14.2
-scikit-learn==1.4.2
-matplotlib==3.9.0
+numpy>=1.26.4
+pandas>=2.2.2
+scipy>=1.13.0
+statsmodels>=0.14.2
+scikit-learn>=1.4.2
+matplotlib>=3.9.0
 
 # Optional / activated by flags or credentials
 # prophet==1.1.5          # second forecasting model (heavy build; optional)
-# yfinance==0.2.40        # live data (--live)
+yfinance>=0.2.40        # live data (--live)
 # fredapi==0.5.2          # macro indicators
 # PyWavelets==1.6.0       # wavelet decomposition (else Haar fallback)
 # matlab.engine           # thesis-only; requires local licensed MATLAB
 
 # Testing
 pytest==8.2.0
+
+# Dashboard
+fastapi==0.111.0
+uvicorn==0.30.1

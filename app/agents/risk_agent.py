@@ -1,4 +1,5 @@
 """Risk Assessment Agent — Sharpe, VaR, drawdown, beta, volatility."""
+
 from __future__ import annotations
 
 from app.core.config import Config

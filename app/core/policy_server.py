@@ -12,6 +12,7 @@ Two layers gate every tool call:
 A denied call returns a structured violation the agent can self-correct against,
 rather than raising.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -20,8 +21,14 @@ from dataclasses import dataclass
 
 ROLE_ALLOWED = {
     "analyst": {
-        "yfinance_fetch", "fred_fetch", "drive_read", "drive_write",
-        "run_python", "run_matlab", "calendar_create", "chat_post",
+        "yfinance_fetch",
+        "fred_fetch",
+        "drive_read",
+        "drive_write",
+        "run_python",
+        "run_matlab",
+        "calendar_create",
+        "chat_post",
     },
     "reviewer": {"*"},
 }
@@ -65,7 +72,8 @@ class PolicyServer:
                 pass
             if "[[" in blob and "]]" in blob:
                 return PolicyDecision(
-                    False, f"'{tool}' payload has unresolved placeholders; refusing send"
+                    False,
+                    f"'{tool}' payload has unresolved placeholders; refusing send",
                 )
         return PolicyDecision(True)
 

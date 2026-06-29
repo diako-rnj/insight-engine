@@ -8,6 +8,7 @@ The critique node may route one loop-back to the forecasting step. The HITL gate
 is represented by a callback so the same graph runs both interactively (asking a
 human) and non-interactively (tests / CI supply the decision).
 """
+
 from __future__ import annotations
 
 from typing import Callable
@@ -35,8 +36,9 @@ def auto_reject(_ckpt) -> tuple[bool, str]:
     return False, "auto-reject (non-interactive default)"
 
 
-def run_pipeline(ticker: str, months: int, cfg: Config,
-                 hitl: HitlDecider = auto_reject) -> dict:
+def run_pipeline(
+    ticker: str, months: int, cfg: Config, hitl: HitlDecider = auto_reject
+) -> dict:
     trace: list[str] = []
 
     data = data_ingestion_agent.run(ticker, months, cfg)
@@ -62,7 +64,9 @@ def run_pipeline(ticker: str, months: int, cfg: Config,
     approved, feedback = hitl(checkpoint)
     trace.append(f"hitl:{'approved' if approved else 'rejected'}")
 
-    dist = distribution_agent.distribute(report, cfg, approved=approved, feedback=feedback)
+    dist = distribution_agent.distribute(
+        report, cfg, approved=approved, feedback=feedback
+    )
     trace.append(f"distribute:{dist['status']}")
 
     return {

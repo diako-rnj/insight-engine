@@ -4,12 +4,13 @@ Runs the full pipeline. By default the HITL checkpoint prompts on the terminal;
 pass ``--yes`` to auto-approve or ``--no`` to auto-reject (useful for demos and
 CI). Live data activates with ``--live`` (requires yfinance + internet).
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 
-from app.agent import auto_approve, auto_reject, run_pipeline
+from app.agent import auto_approve, auto_reject, run_pipeline, HitlDecider
 from app.agents import distribution_agent
 from app.core.config import CONFIG, Config
 
@@ -32,14 +33,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Insight Engine pipeline")
     parser.add_argument("--ticker", default="AAPL")
     parser.add_argument("--months", type=int, default=6)
-    parser.add_argument("--live", action="store_true", help="use live yfinance data")
     parser.add_argument("--yes", action="store_true", help="auto-approve HITL")
     parser.add_argument("--no", action="store_true", help="auto-reject HITL")
     parser.add_argument("--json", action="store_true", help="print full result as JSON")
     args = parser.parse_args()
 
-    cfg = Config(use_live_data=args.live or CONFIG.use_live_data)
+    cfg = Config(use_live_data=True)
 
+    hitl: HitlDecider
     if args.yes:
         hitl = auto_approve
     elif args.no:
@@ -52,8 +53,11 @@ def main() -> None:
     if args.json:
         # Trim large arrays for readability.
         slim = dict(result)
-        slim["forecast"] = {k: v for k, v in result["forecast"].items()
-                            if k not in ("trend", "residual")}
+        slim["forecast"] = {
+            k: v
+            for k, v in result["forecast"].items()
+            if k not in ("trend", "residual")
+        }
         print(json.dumps(slim, indent=2, default=str))
         return
 

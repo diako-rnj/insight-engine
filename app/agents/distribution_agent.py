@@ -8,6 +8,7 @@ Implements the spec's security contract:
   ContextResolver before the MCP client is ever called.
 * On rejection, the report is kept locally only and the decision is logged.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -21,6 +22,7 @@ from app.core.policy_server import PolicyServer
 @dataclass
 class Checkpoint:
     """The HITL preview presented to the human before any external action."""
+
     summary_preview: str
     gmail_recipient: str
     drive_destination: str
@@ -30,7 +32,9 @@ class Checkpoint:
 
 def build_checkpoint(report: dict, cfg: Config) -> Checkpoint:
     preview = " ".join(report["summary"].split()[:200])
-    channels = [c for c in ("drive", "gmail", "calendar", "chat") if cfg.channel_enabled(c)]
+    channels = [
+        c for c in ("drive", "gmail", "calendar", "chat") if cfg.channel_enabled(c)
+    ]
     return Checkpoint(
         summary_preview=preview,
         gmail_recipient=cfg.gmail_recipient or "[[GMAIL_RECIPIENT]]",
@@ -40,8 +44,9 @@ def build_checkpoint(report: dict, cfg: Config) -> Checkpoint:
     )
 
 
-def distribute(report: dict, cfg: Config, *, approved: bool,
-               feedback: str = "") -> dict:
+def distribute(
+    report: dict, cfg: Config, *, approved: bool, feedback: str = ""
+) -> dict:
     """Run distribution iff approved. Returns an audit record either way."""
     if not approved:
         return {
@@ -52,30 +57,46 @@ def distribute(report: dict, cfg: Config, *, approved: bool,
         }
 
     policy = PolicyServer(role="analyst", environment=cfg.environment)
-    resolver = ContextResolver(runtime_state={
-        k: v for k, v in {
-            "GMAIL_RECIPIENT": cfg.gmail_recipient,
-            "DRIVE_FOLDER": cfg.drive_folder,
-        }.items() if v
-    })
+    resolver = ContextResolver(
+        runtime_state={
+            k: v
+            for k, v in {
+                "GMAIL_RECIPIENT": cfg.gmail_recipient,
+                "DRIVE_FOLDER": cfg.drive_folder,
+            }.items()
+            if v
+        }
+    )
     client = get_mcp_client()
     actions: list[dict] = []
 
     plan = [
-        ("drive", "drive_write", {
-            "folder": "[[DRIVE_FOLDER]]",
-            "filename": report["report_path"].split("/")[-1],
-            "content_path": report["report_path"],
-        }),
-        ("gmail", "gmail_send", {
-            "to": "[[GMAIL_RECIPIENT]]",
-            "subject": "Insight Engine — analysis complete",
-            "body": ContextResolver.scrub(report["summary"]),
-        }),
-        ("calendar", "calendar_create", {
-            "title": "Insight Engine follow-up review",
-            "in_days": 7,
-        }),
+        (
+            "drive",
+            "drive_write",
+            {
+                "folder": "[[DRIVE_FOLDER]]",
+                "filename": report["report_path"].split("/")[-1],
+                "content_path": report["report_path"],
+            },
+        ),
+        (
+            "gmail",
+            "gmail_send",
+            {
+                "to": "[[GMAIL_RECIPIENT]]",
+                "subject": "Insight Engine — analysis complete",
+                "body": ContextResolver.scrub(report["summary"]),
+            },
+        ),
+        (
+            "calendar",
+            "calendar_create",
+            {
+                "title": "Insight Engine follow-up review",
+                "in_days": 7,
+            },
+        ),
         ("chat", "chat_post", {"text": "Analysis complete ✅"}),
     ]
 
@@ -86,10 +107,14 @@ def distribute(report: dict, cfg: Config, *, approved: bool,
         args = resolver.resolve_args(raw_args)
         decision = policy.check(tool, args)
         if not decision:
-            actions.append({"channel": channel, "status": f"blocked: {decision.reason}"})
+            actions.append(
+                {"channel": channel, "status": f"blocked: {decision.reason}"}
+            )
             continue
         result = getattr(client, tool)(**args)
-        actions.append({"channel": channel, "status": result.status, "action": result.action})
+        actions.append(
+            {"channel": channel, "status": result.status, "action": result.action}
+        )
 
     return {
         "status": "distributed",

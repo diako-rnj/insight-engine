@@ -6,6 +6,7 @@ ensembles them; ottherwise falls back to a deterministic drift+noise baseline so
 the pipeline always returns a forecast. Reports MAPE on a hold-out tail so the
 Critique agent can judge confidence.
 """
+
 from __future__ import annotations
 
 import statistics
@@ -46,15 +47,24 @@ def _baseline_forecast(close: list[float], horizon: int) -> Forecast:
     # Crude decomposition: trend = rolling mean, residual = close - trend.
     window = max(5, len(close) // 10)
     trend = [
-        statistics.fmean(close[max(0, i - window): i + 1]) for i in range(len(close))
+        statistics.fmean(close[max(0, i - window) : i + 1]) for i in range(len(close))
     ]
     residual = [close[i] - trend[i] for i in range(len(close))]
     seasonality = [0.0] * len(close)
 
     # Backtest MAPE on last `horizon` points using naive drift.
     mape = _holdout_mape(close, horizon, mu)
-    return Forecast(horizon, point, lower, upper, mape, "baseline_drift",
-                    trend, seasonality, residual)
+    return Forecast(
+        horizon,
+        point,
+        lower,
+        upper,
+        mape,
+        "baseline_drift",
+        trend,
+        seasonality,
+        residual,
+    )
 
 
 def _holdout_mape(close: list[float], horizon: int, mu: float) -> float:
@@ -79,6 +89,7 @@ def forecast(close: list[float], horizon: int = 30) -> Forecast:
 
     try:
         import warnings
+
         warnings.filterwarnings("ignore")
         from statsmodels.tsa.arima.model import ARIMA  # noqa: WPS433
 
@@ -94,7 +105,16 @@ def forecast(close: list[float], horizon: int = 30) -> Forecast:
         # Ensemble: average ARIMA with baseline point forecast; keep baseline bands.
         point = [round((a + b) / 2, 2) for a, b in zip(arima_fc, base.point)]
         method = "ensemble(" + "+".join(methods_used + ["baseline"]) + ")"
-        return Forecast(horizon, point, base.lower, base.upper, base.mape, method,
-                        base.trend, base.seasonality, base.residual)
+        return Forecast(
+            horizon,
+            point,
+            base.lower,
+            base.upper,
+            base.mape,
+            method,
+            base.trend,
+            base.seasonality,
+            base.residual,
+        )
 
     return base

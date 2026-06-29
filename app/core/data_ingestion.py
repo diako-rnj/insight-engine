@@ -10,6 +10,7 @@ The output is a plain ``list[dict]`` of daily bars — no pandas required at the
 ingestion boundary, which keeps the cache human-readable and the contract
 simple. Downstream agents convert to arrays/frames as needed.
 """
+
 from __future__ import annotations
 
 import json
@@ -23,6 +24,9 @@ from dataclasses import dataclass
 class Series:
     ticker: str
     dates: list[str]
+    open: list[float]
+    high: list[float]
+    low: list[float]
     close: list[float]
     volume: list[float]
     source: str  # "live" | "cache" | "synthetic"
@@ -35,19 +39,30 @@ def _synthesize(ticker: str, n: int) -> Series:
     """Deterministic geometric-random-walk with a planted volume spike anomaly."""
     rng = random.Random(hash(ticker) & 0xFFFF)
     price = 150.0
-    closes, vols, dates = [], [], []
+    opens, highs, lows, closes, vols, dates = [], [], [], [], [], []
     for i in range(n):
         drift = 0.0004
         shock = rng.gauss(0, 0.012)
+
+        # Open price slightly offset from previous close
+        o = round(price * (1.0 + rng.gauss(0, 0.002)), 2)
+        opens.append(o)
+
         price *= math.exp(drift + shock)
-        closes.append(round(price, 2))
+        c = round(price, 2)
+        closes.append(c)
+
+        # Wicks
+        highs.append(round(max(o, c) * (1.0 + abs(rng.gauss(0, 0.005))), 2))
+        lows.append(round(min(o, c) * (1.0 - abs(rng.gauss(0, 0.005))), 2))
+
         base_vol = 5_000_000 + rng.gauss(0, 400_000)
         # Plant one clear volume anomaly ~70% through the window.
         if i == int(n * 0.7):
             base_vol *= 4.5
-        vols.append(round(max(base_vol, 1_000_000)))
+        vols.append(float(round(max(base_vol, 1_000_000))))
         dates.append(f"2026-day-{i:03d}")
-    return Series(ticker, dates, closes, vols, "synthetic")
+    return Series(ticker, dates, opens, highs, lows, closes, vols, "synthetic")
 
 
 def _load_cache(path: str, ticker: str) -> Series | None:
@@ -58,7 +73,17 @@ def _load_cache(path: str, ticker: str) -> Series | None:
     rec = blob.get(ticker)
     if not rec:
         return None
-    return Series(ticker, rec["dates"], rec["close"], rec["volume"], "cache")
+    # Provide fallback to 'close' if 'open' is missing in an older cache
+    return Series(
+        ticker=ticker,
+        dates=rec["dates"],
+        open=rec.get("open", rec["close"]),
+        high=rec.get("high", rec["close"]),
+        low=rec.get("low", rec["close"]),
+        close=[float(x) for x in rec["close"]],
+        volume=[float(x) for x in rec["volume"]],
+        source="cache",
+    )
 
 
 def _fetch_live(ticker: str, months: int) -> Series | None:
@@ -73,6 +98,9 @@ def _fetch_live(ticker: str, months: int) -> Series | None:
     return Series(
         ticker=ticker,
         dates=[d.strftime("%Y-%m-%d") for d in df.index],
+        open=[float(x) for x in df["Open"].to_list()],
+        high=[float(x) for x in df["High"].to_list()],
+        low=[float(x) for x in df["Low"].to_list()],
         close=[float(x) for x in df["Close"].to_list()],
         volume=[float(x) for x in df["Volume"].to_list()],
         source="live",

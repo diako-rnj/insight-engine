@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insight Engine | Autonomous Financial Analysis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Marked library for rendering Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="glass-background"></div>
+    
+    <main class="container">
+        <header class="header">
+            <div class="brand">
+                <span class="logo">📈</span>
+                <h1>Insight Engine</h1>
+            </div>
+            <p class="subtitle">Autonomous Financial Forecasting & Anomaly Detection</p>
+        </header>
+
+        <section class="control-panel panel">
+            <form id="run-form" class="form">
+                <div class="input-group">
+                    <label for="ticker">Ticker Symbol</label>
+                    <input type="text" id="ticker" name="ticker" value="AAPL" required autocomplete="off" placeholder="e.g. AAPL, MSFT">
+                </div>
+                
+                <div class="input-group">
+                    <label for="months">Timeframe (Months)</label>
+                    <input type="number" id="months" name="months" value="6" min="1" max="60" required>
+                </div>
+
+
+
+                <button type="submit" id="submit-btn" class="btn primary-btn">
+                    <span>Run Analysis</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </button>
+            </form>
+        </section>
+
+        <!-- Loading State -->
+        <section id="loading-state" class="loading-state hidden">
+            <div class="spinner"></div>
+            <h2 id="loading-text">Orchestrating agents...</h2>
+            <div class="agent-trace" id="agent-trace"></div>
+        </section>
+
+        <!-- Results Section -->
+        <section id="results-panel" class="results-panel panel hidden">
+            <header class="results-header">
+                <h2>Analysis Complete</h2>
+                <div class="badges">
+                    <button id="download-btn" class="btn secondary-btn" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-right: 10px;">⬇️ Download Report</button>
+                    <span class="badge badge-success" id="hitl-status">HITL: Dry Run</span>
+                </div>
+            </header>
+
+            <div class="chart-container">
+                <img id="chart-image" src="" alt="Financial Forecast Chart" class="hidden">
+            </div>
+
+            <div class="markdown-body" id="report-content">
+                <!-- Markdown rendered here -->
+            </div>
+        </section>
+    </main>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

@@ -4,6 +4,7 @@ Computes the metric table from the spec. Honours the insufficient-history
 contract: with fewer than 60 trading days it flags unreliability and attaches
 explicit confidence warnings rather than emitting misleading numbers silently.
 """
+
 from __future__ import annotations
 
 import math
@@ -24,8 +25,11 @@ def _log_returns(close: list[float]) -> list[float]:
     return [math.log(close[i] / close[i - 1]) for i in range(1, len(close))]
 
 
-def assess(close: list[float], market_close: list[float] | None = None,
-           risk_free_rate: float = 0.04) -> RiskReport:
+def assess(
+    close: list[float],
+    market_close: list[float] | None = None,
+    risk_free_rate: float = 0.04,
+) -> RiskReport:
     report = RiskReport()
     n = len(close)
 

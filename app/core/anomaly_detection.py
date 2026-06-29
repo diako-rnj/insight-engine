@@ -7,6 +7,7 @@ Implements the Gherkin contract from the spec:
 * If nothing exceeds threshold, it says so and reports baseline stats. It does
   **not** fabricate anomalies to fill the section.
 """
+
 from __future__ import annotations
 
 import statistics
@@ -17,8 +18,8 @@ from dataclasses import dataclass, field
 class Anomaly:
     index: int
     date: str
-    kind: str          # "volume_spike" | "bollinger_breach"
-    severity: str      # "LOW" | "MEDIUM" | "HIGH"
+    kind: str  # "volume_spike" | "bollinger_breach"
+    severity: str  # "LOW" | "MEDIUM" | "HIGH"
     detail: str
 
 
@@ -50,11 +51,16 @@ def detect(dates: list[str], close: list[float], volume: list[float]) -> Anomaly
             continue
         z = (volume[i] - mean) / std
         if z > 3:
-            report.anomalies.append(Anomaly(
-                index=i, date=dates[i], kind="volume_spike", severity="HIGH",
-                detail=f"volume {volume[i]:,.0f} is {z:.1f}σ above 20-day mean "
-                       f"({mean:,.0f}); close moved to {close[i]:.2f}",
-            ))
+            report.anomalies.append(
+                Anomaly(
+                    index=i,
+                    date=dates[i],
+                    kind="volume_spike",
+                    severity="HIGH",
+                    detail=f"volume {volume[i]:,.0f} is {z:.1f}σ above 20-day mean "
+                    f"({mean:,.0f}); close moved to {close[i]:.2f}",
+                )
+            )
 
     # --- Bollinger band breach (20-day, 2σ) ---
     # Collapse a run of consecutive breaches on the same side into ONE event,
@@ -68,11 +74,16 @@ def detect(dates: list[str], close: list[float], volume: list[float]) -> Anomaly
         i_peak, sigma_peak, side = max(run, key=lambda t: t[1])
         sev = "HIGH" if sigma_peak >= 3 else "MEDIUM" if sigma_peak >= 2.5 else "LOW"
         span = "" if len(run) == 1 else f" over {len(run)} sessions"
-        report.anomalies.append(Anomaly(
-            index=i_peak, date=dates[i_peak], kind="bollinger_breach", severity=sev,
-            detail=f"close {close[i_peak]:.2f} broke {side} 2σ band "
-                   f"({sigma_peak:.1f}σ{span})",
-        ))
+        report.anomalies.append(
+            Anomaly(
+                index=i_peak,
+                date=dates[i_peak],
+                kind="bollinger_breach",
+                severity=sev,
+                detail=f"close {close[i_peak]:.2f} broke {side} 2σ band "
+                f"({sigma_peak:.1f}σ{span})",
+            )
+        )
         run.clear()
 
     for i in range(20, len(close)):
@@ -103,11 +114,15 @@ def detect(dates: list[str], close: list[float], volume: list[float]) -> Anomaly
         for j, f in enumerate(flags):
             i = j + 1
             if f == -1 and not any(a.index == i for a in report.anomalies):
-                report.anomalies.append(Anomaly(
-                    index=i, date=dates[i], kind="isoforest_multivariate",
-                    severity="MEDIUM",
-                    detail="multivariate outlier (return × volume) flagged by Isolation Forest",
-                ))
+                report.anomalies.append(
+                    Anomaly(
+                        index=i,
+                        date=dates[i],
+                        kind="isoforest_multivariate",
+                        severity="MEDIUM",
+                        detail="multivariate outlier (return × volume) flagged by Isolation Forest",
+                    )
+                )
     except Exception:
         pass
 

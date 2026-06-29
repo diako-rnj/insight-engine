@@ -3,10 +3,10 @@
 Each test name references the scenario it verifies so the spec stays the source
 of truth and the suite doubles as living documentation.
 """
+
 from __future__ import annotations
 
 from app.agent import auto_approve, auto_reject, run_pipeline
-from app.agents import distribution_agent
 from app.core.config import Config
 from app.core.policy_server import PolicyServer
 
@@ -14,10 +14,11 @@ from app.core.policy_server import PolicyServer
 def _cfg(**kw) -> Config:
     base = dict(use_live_data=False, cache_path="app/data/snapshot.json")
     base.update(kw)
-    return Config(**base)
+    return Config(**base)  # type: ignore
 
 
 # Feature: Forecasting --------------------------------------------------------
+
 
 def test_scenario_single_stock_forecast():
     """Given ticker + horizon, Then a 30-day forecast with CI is produced."""
@@ -28,6 +29,7 @@ def test_scenario_single_stock_forecast():
 
 
 # Feature: Security & HITL ----------------------------------------------------
+
 
 def test_scenario_hitl_blocks_until_approval():
     """Then execution pauses; on reject NO external action is taken."""
@@ -63,16 +65,22 @@ def test_scenario_unresolved_placeholder_refused():
 
 # Feature: HITL checkpoint contents ------------------------------------------
 
+
 def test_scenario_checkpoint_previews_actions():
     """The checkpoint surfaces summary, recipient, drive dest, calendar event."""
     result = run_pipeline("MSFT", 6, _cfg(), hitl=auto_reject)
     ck = result["checkpoint"]
-    for field in ("summary_preview", "gmail_recipient", "drive_destination",
-                  "calendar_event"):
+    for field in (
+        "summary_preview",
+        "gmail_recipient",
+        "drive_destination",
+        "calendar_event",
+    ):
         assert field in ck
 
 
 # Feature: Honest reporting ---------------------------------------------------
+
 
 def test_scenario_critique_routes_and_reports_confidence():
     result = run_pipeline("AAPL", 6, _cfg(), hitl=auto_reject)

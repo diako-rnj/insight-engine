@@ -1,4 +1,5 @@
 """Unit tests for the analytical core modules."""
+
 from __future__ import annotations
 
 import math
@@ -10,6 +11,7 @@ from app.core.risk import assess
 
 def _series(n=120, spike_at=84):
     import random
+
     rng = random.Random(42)
     closes, vols, dates = [], [], []
     p = 100.0
@@ -62,8 +64,12 @@ def test_risk_metrics_present():
     _, closes, _ = _series(252)
     rep = assess(closes, risk_free_rate=0.04)
     assert rep.reliable
-    for key in ("sharpe_ratio", "var_95_historical", "max_drawdown_pct",
-                "annualized_volatility_pct"):
+    for key in (
+        "sharpe_ratio",
+        "var_95_historical",
+        "max_drawdown_pct",
+        "annualized_volatility_pct",
+    ):
         assert key in rep.metrics
 
 

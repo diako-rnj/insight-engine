@@ -1,0 +1,117 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('run-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const loadingState = document.getElementById('loading-state');
+    const resultsPanel = document.getElementById('results-panel');
+    const agentTrace = document.getElementById('agent-trace');
+    const reportContent = document.getElementById('report-content');
+    const chartImage = document.getElementById('chart-image');
+    
+    let currentMarkdownReport = "";
+    let currentTicker = "";
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Hide results and show loading
+        resultsPanel.classList.add('hidden');
+        loadingState.classList.remove('hidden');
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.5';
+        agentTrace.innerHTML = 'Connecting to Orchestrator...';
+
+        const ticker = document.getElementById('ticker').value.toUpperCase();
+        const months = document.getElementById('months').value;
+
+        // Simulate agent trace updates for better UX
+        const mockTraces = [
+            `ingest:yfinance:${months * 30}d`,
+            `analyze:ARIMA+Prophet:anom=...`,
+            `critique:evaluating...`
+        ];
+        
+        let traceIdx = 0;
+        const traceInterval = setInterval(() => {
+            if (traceIdx < mockTraces.length) {
+                agentTrace.innerHTML = `> ${mockTraces[traceIdx]}`;
+                traceIdx++;
+            }
+        }, 1500);
+
+        try {
+            // Build query params
+            const params = new URLSearchParams({
+                ticker: ticker,
+                months: months
+            });
+
+            // Call the backend API
+            const response = await fetch(`/api/run?${params.toString()}`);
+            
+            if (!response.ok) {
+                throw new Error('Pipeline execution failed');
+            }
+
+            const result = await response.json();
+            clearInterval(traceInterval);
+            
+            // Render the results
+            renderResults(result, ticker);
+
+        } catch (error) {
+            clearInterval(traceInterval);
+            agentTrace.innerHTML = `<span style="color: var(--danger)">Error: ${error.message}</span>`;
+            console.error(error);
+        } finally {
+            // Re-enable button
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+            loadingState.classList.add('hidden');
+        }
+    });
+
+    function renderResults(result, ticker) {
+        // Show the panel
+        resultsPanel.classList.remove('hidden');
+        
+        // Render Markdown Report
+        if (result.report && result.report.markdown) {
+            currentMarkdownReport = result.report.markdown;
+            currentTicker = ticker;
+            reportContent.innerHTML = marked.parse(result.report.markdown);
+        } else if (result.report && result.report.summary) {
+            currentMarkdownReport = result.report.summary;
+            currentTicker = ticker;
+            reportContent.innerHTML = marked.parse(result.report.summary);
+        } else {
+            currentMarkdownReport = "";
+            reportContent.innerHTML = "<p>No report found.</p>";
+        }
+
+        // Display Chart
+        // The charts are saved in artifacts/charts/TICKER_chart.png
+        // We exposed /artifacts in FastAPI
+        const timestamp = new Date().getTime(); // to prevent caching
+        chartImage.src = `/artifacts/charts/${ticker}_chart.png?t=${timestamp}`;
+        chartImage.classList.remove('hidden');
+        
+        // Scroll to results smoothly
+        resultsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    const downloadBtn = document.getElementById('download-btn');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', () => {
+            if (!currentMarkdownReport) return;
+            const blob = new Blob([currentMarkdownReport], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentTicker || 'analysis'}_report.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    }
+});

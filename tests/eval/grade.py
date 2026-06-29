@@ -6,6 +6,7 @@ layer (rubric scoring of the report prose) is the documented extension point.
 
 Run:  python -m tests.eval.grade
 """
+
 from __future__ import annotations
 
 import json
@@ -32,32 +33,41 @@ def _check(case: dict) -> tuple[bool, list[str]]:
 
     if "forecast_horizon" in exp:
         cond = r["forecast"]["horizon"] == exp["forecast_horizon"]
-        ok &= cond; notes.append(f"horizon={'ok' if cond else 'FAIL'}")
+        ok &= cond
+        notes.append(f"horizon={'ok' if cond else 'FAIL'}")
     if exp.get("has_confidence_bands"):
         cond = len(r["forecast"]["lower"]) == len(r["forecast"]["point"])
-        ok &= cond; notes.append(f"bands={'ok' if cond else 'FAIL'}")
+        ok &= cond
+        notes.append(f"bands={'ok' if cond else 'FAIL'}")
     if "confidence_in" in exp:
         cond = r["critique"]["confidence"] in exp["confidence_in"]
-        ok &= cond; notes.append(f"confidence={'ok' if cond else 'FAIL'}")
+        ok &= cond
+        notes.append(f"confidence={'ok' if cond else 'FAIL'}")
     if "min_anomalies" in exp:
         cond = r["anomalies"]["count"] >= exp["min_anomalies"]
-        ok &= cond; notes.append(f"anomalies>={exp['min_anomalies']}:{'ok' if cond else 'FAIL'}")
+        ok &= cond
+        notes.append(f"anomalies>={exp['min_anomalies']}:{'ok' if cond else 'FAIL'}")
     if exp.get("has_baseline_stats"):
         cond = "mean_close" in r["anomalies"]["baseline"]
-        ok &= cond; notes.append(f"baseline={'ok' if cond else 'FAIL'}")
+        ok &= cond
+        notes.append(f"baseline={'ok' if cond else 'FAIL'}")
     if "required_metrics" in exp:
         cond = all(m in r["risk"]["metrics"] for m in exp["required_metrics"])
-        ok &= cond; notes.append(f"metrics={'ok' if cond else 'FAIL'}")
+        ok &= cond
+        notes.append(f"metrics={'ok' if cond else 'FAIL'}")
     if "distribution_status" in exp:
         cond = r["distribution"]["status"] == exp["distribution_status"]
-        ok &= cond; notes.append(f"dist={'ok' if cond else 'FAIL'}")
+        ok &= cond
+        notes.append(f"dist={'ok' if cond else 'FAIL'}")
     if exp.get("external_actions_empty"):
         cond = r["distribution"]["external_actions"] == []
-        ok &= cond; notes.append(f"no_egress={'ok' if cond else 'FAIL'}")
+        ok &= cond
+        notes.append(f"no_egress={'ok' if cond else 'FAIL'}")
     if exp.get("drive_channel_present"):
         chans = {a.get("channel") for a in r["distribution"]["external_actions"]}
         cond = "drive" in chans
-        ok &= cond; notes.append(f"drive={'ok' if cond else 'FAIL'}")
+        ok &= cond
+        notes.append(f"drive={'ok' if cond else 'FAIL'}")
 
     return ok, notes
 

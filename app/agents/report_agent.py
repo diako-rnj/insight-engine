@@ -4,6 +4,7 @@ Generates a structured report from the analysis results. Charts render with
 matplotlib when available; otherwise the report still produces with a note that
 the chart was skipped (the pipeline never hard-fails on a plotting backend).
 """
+
 from __future__ import annotations
 
 import os
@@ -14,43 +15,115 @@ from app.core.config import Config
 def _render_chart(data: dict, forecast: dict, anomalies: dict, path: str) -> bool:
     try:
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
+        import matplotlib.patches as mpatches
     except Exception:
         return False
 
+    opens = data["open"]
+    highs = data["high"]
+    lows = data["low"]
     close = data["close"]
     x_hist = list(range(len(close)))
     x_fc = list(range(len(close), len(close) + forecast["horizon"]))
 
     fig, ax = plt.subplots(figsize=(11, 5))
-    ax.plot(x_hist, close, label="Historical close", linewidth=1.4)
-    ax.plot(x_fc, forecast["point"], label="Forecast", linestyle="--")
-    ax.fill_between(x_fc, forecast["lower"], forecast["upper"], alpha=0.2,
-                    label="95% CI")
+
+    # 1. Candlesticks
+    up_idx = [i for i, (o, c) in enumerate(zip(opens, close)) if c >= o]
+    down_idx = [i for i, (o, c) in enumerate(zip(opens, close)) if c < o]
+
+    ax.vlines(
+        up_idx,
+        [lows[i] for i in up_idx],
+        [highs[i] for i in up_idx],
+        color="#26a69a",
+        linewidth=1,
+        zorder=2,
+    )
+    ax.vlines(
+        down_idx,
+        [lows[i] for i in down_idx],
+        [highs[i] for i in down_idx],
+        color="#ef5350",
+        linewidth=1,
+        zorder=2,
+    )
+
+    width = 0.8 if len(close) <= 60 else 0.5
+    ax.bar(
+        up_idx,
+        [close[i] - opens[i] for i in up_idx],
+        bottom=[opens[i] for i in up_idx],
+        color="#26a69a",
+        width=width,
+        zorder=3,
+    )
+    ax.bar(
+        down_idx,
+        [opens[i] - close[i] for i in down_idx],
+        bottom=[close[i] for i in down_idx],
+        color="#ef5350",
+        width=width,
+        zorder=3,
+    )
+
+    # 2. Forecast
+    ax.plot(
+        x_fc,
+        forecast["point"],
+        label="Forecast",
+        linestyle="--",
+        color="#2962ff",
+        zorder=4,
+    )
+    ax.fill_between(
+        x_fc,
+        forecast["lower"],
+        forecast["upper"],
+        alpha=0.2,
+        color="#2962ff",
+        label="95% CI",
+        zorder=1,
+    )
+
+    # 3. Anomalies
     for a in anomalies["anomalies"]:
         if a["index"] < len(close):
-            ax.scatter([a["index"]], [close[a["index"]]], color="red", zorder=5,
-                       marker="v", s=60)
-    ax.set_title(f"{data['ticker']} — price, forecast, anomalies")
+            # Place the marker slightly above the high
+            y_pos = highs[a["index"]] * 1.01
+            ax.scatter(
+                [a["index"]], [y_pos], color="#d50000", zorder=5, marker="v", s=60
+            )
+
+    # Legend
+    handles, labels = ax.get_legend_handles_labels()
+    handles.append(mpatches.Patch(color="#26a69a", label="Bullish"))
+    handles.append(mpatches.Patch(color="#ef5350", label="Bearish"))
+
+    ax.set_title(f"{data['ticker']} — Price, Forecast, Anomalies")
     ax.set_xlabel("Trading day")
     ax.set_ylabel("Price")
-    ax.legend(loc="best", fontsize=8)
+    ax.legend(handles=handles, loc="best", fontsize=8)
     fig.tight_layout()
     fig.savefig(path, dpi=120)
     plt.close(fig)
     return True
 
 
-def _exec_summary(data: dict, forecast: dict, anomalies: dict, risk: dict,
-                  critique: dict) -> str:
+def _exec_summary(
+    data: dict, forecast: dict, anomalies: dict, risk: dict, critique: dict
+) -> str:
     last = data["close"][-1]
     target = forecast["point"][-1]
     direction = "upside" if target > last else "downside"
     pct = (target - last) / last * 100
     a_line = (
         f"{anomalies['count']} statistically significant anomaly(ies) flagged"
-        if anomalies["found"] else "No statistically significant anomalies detected"
+        if anomalies["found"]
+        else "No statistically significant anomalies detected"
     )
     return (
         f"{data['ticker']} closed at {last:.2f}. The {forecast['method']} model "
@@ -63,8 +136,9 @@ def _exec_summary(data: dict, forecast: dict, anomalies: dict, risk: dict,
     )
 
 
-def run(data: dict, forecast: dict, anomalies: dict, risk: dict,
-        critique: dict, cfg: Config) -> dict:
+def run(
+    data: dict, forecast: dict, anomalies: dict, risk: dict, critique: dict, cfg: Config
+) -> dict:
     os.makedirs(cfg.reports_dir, exist_ok=True)
     os.makedirs(cfg.charts_dir, exist_ok=True)
 
@@ -86,7 +160,10 @@ def run(data: dict, forecast: dict, anomalies: dict, risk: dict,
     ]
 
     if has_chart:
-        lines += [f"![{data['ticker']} chart]({os.path.relpath(chart_path, cfg.reports_dir)})", ""]
+        lines += [
+            f"![{data['ticker']} chart]({os.path.relpath(chart_path, cfg.reports_dir)})",
+            "",
+        ]
     else:
         lines += ["*(Chart skipped: matplotlib backend unavailable.)*", ""]
 
@@ -106,7 +183,9 @@ def run(data: dict, forecast: dict, anomalies: dict, risk: dict,
         lines.append("| Date | Type | Severity | Detail |")
         lines.append("|---|---|---|---|")
         for a in anomalies["anomalies"]:
-            lines.append(f"| {a['date']} | {a['kind']} | {a['severity']} | {a['detail']} |")
+            lines.append(
+                f"| {a['date']} | {a['kind']} | {a['severity']} | {a['detail']} |"
+            )
     else:
         b = anomalies["baseline"]
         lines.append("No statistically significant anomalies detected.")

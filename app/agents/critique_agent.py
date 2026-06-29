@@ -6,13 +6,15 @@ loop-back with an instruction to widen the confidence bands. It also validates
 that anomaly findings carry statistical context and that risk metrics declare
 their reliability. The loop is bounded (one retry) to avoid infinite cycles.
 """
+
 from __future__ import annotations
 
 from app.core.config import Config
 
 
-def run(forecast: dict, anomalies: dict, risk: dict, cfg: Config,
-        attempt: int = 0) -> dict:
+def run(
+    forecast: dict, anomalies: dict, risk: dict, cfg: Config, attempt: int = 0
+) -> dict:
     issues: list[str] = []
     route = "approve"
 
@@ -33,11 +35,12 @@ def run(forecast: dict, anomalies: dict, risk: dict, cfg: Config,
         confidence = "MEDIUM"
 
     return {
-        "route": route,                 # "approve" | "loop_back"
+        "route": route,  # "approve" | "loop_back"
         "confidence": confidence,
         "issues": issues,
         "instruction": (
             "Widen confidence bands and state uncertainty explicitly."
-            if route == "loop_back" else ""
+            if route == "loop_back"
+            else ""
         ),
     }
