@@ -28,7 +28,7 @@ The agent pipeline automatically:
 4. **Evaluates Risk:** Computes critical risk metrics including Sharpe ratio, VaR (95/99), max drawdown, beta, and volatility.
 5. **Generates Reports:** Drafts a clean Markdown report summarizing the findings.
 6. **Visualizes Results:** Renders a gorgeous, highly accurate Candlestick chart overlaid with the forecast and anomalies using `matplotlib`.
-7. **Professional PDF Export:** Provides a seamless, flash-free download of a comprehensive PDF report combining the chart, summary, and deep-dive methodology.
+7. **Dual Export Options:** Provides a seamless, flash-free download of a comprehensive **Professional PDF** report, as well as a pure **Markdown (.md)** download option for developers and raw data processing.
 
 ---
 

@@ -146,6 +146,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const downloadMdBtn = document.getElementById('download-md-btn');
+    if (downloadMdBtn) {
+        downloadMdBtn.addEventListener('click', () => {
+            if (!currentMarkdownReport) return;
+            const blob = new Blob([currentMarkdownReport], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentTicker || 'analysis'}_report.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    }
+
     const readMoreBtn = document.getElementById('read-more-btn');
     const extendedMethodology = document.getElementById('pdf-extended-methodology');
     
