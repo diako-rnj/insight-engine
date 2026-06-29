@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+# pyrefly: ignore [missing-import]
 from fastapi import FastAPI
+# pyrefly: ignore [missing-import]
 from fastapi.responses import HTMLResponse
+# pyrefly: ignore [missing-import]
 from fastapi.staticfiles import StaticFiles
 
 from app.agent import auto_reject, run_pipeline
@@ -46,6 +49,7 @@ async def api_run_pipeline(ticker: str = "AAPL", months: int = 6):
 
 
 if __name__ == "__main__":
+    # pyrefly: ignore [missing-import]
     import uvicorn
 
     uvicorn.run(app, host="127.0.0.1", port=8000)

@@ -88,7 +88,8 @@ def _load_cache(path: str, ticker: str) -> Series | None:
 
 def _fetch_live(ticker: str, months: int) -> Series | None:
     try:
-        import yfinance as yf  # noqa: WPS433 (optional dependency)
+        # pyrefly: ignore [missing-import]
+        import yfinance as yf
     except ImportError:
         return None
     period = f"{max(months, 1)}mo"

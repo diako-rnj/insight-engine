@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Marked library for rendering Markdown -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -56,17 +57,19 @@
             <header class="results-header">
                 <h2>Analysis Complete</h2>
                 <div class="badges">
-                    <button id="download-btn" class="btn secondary-btn" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-right: 10px;">⬇️ Download Report</button>
+                    <button id="download-btn" class="btn secondary-btn" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-right: 10px;">📄 Download PDF Report</button>
                     <span class="badge badge-success" id="hitl-status">HITL: Dry Run</span>
                 </div>
             </header>
 
-            <div class="chart-container">
-                <img id="chart-image" src="" alt="Financial Forecast Chart" class="hidden">
-            </div>
+            <div id="pdf-content">
+                <div class="chart-container">
+                    <img id="chart-image" src="" alt="Financial Forecast Chart" class="hidden">
+                </div>
 
-            <div class="markdown-body" id="report-content">
-                <!-- Markdown rendered here -->
+                <div class="markdown-body" id="report-content">
+                    <!-- Markdown rendered here -->
+                </div>
             </div>
         </section>
     </main>
