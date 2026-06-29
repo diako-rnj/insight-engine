@@ -89,21 +89,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 margin:       0.5,
                 filename:     `${currentTicker || 'analysis'}_report.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 },
+                html2canvas:  { 
+                    scale: 2,
+                    onclone: (clonedDoc) => {
+                        const pdfContent = clonedDoc.getElementById('pdf-content');
+                        if (pdfContent) {
+                            pdfContent.classList.add('pdf-export-mode');
+                        }
+                    }
+                },
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
             
-            const extendedMethodology = document.getElementById('pdf-extended-methodology');
-            if (extendedMethodology) {
+            html2pdf().set(opt).from(element).save();
+        });
+    }
+
+    const readMoreBtn = document.getElementById('read-more-btn');
+    const extendedMethodology = document.getElementById('pdf-extended-methodology');
+    
+    if (readMoreBtn && extendedMethodology) {
+        readMoreBtn.addEventListener('click', () => {
+            if (extendedMethodology.style.display === 'none') {
                 extendedMethodology.style.display = 'block';
+                readMoreBtn.innerHTML = '▲';
+            } else {
+                extendedMethodology.style.display = 'none';
+                readMoreBtn.innerHTML = '•••';
             }
-            
-            // New Promise-based usage:
-            html2pdf().set(opt).from(element).save().then(() => {
-                if (extendedMethodology) {
-                    extendedMethodology.style.display = 'none';
-                }
-            });
         });
     }
 });
