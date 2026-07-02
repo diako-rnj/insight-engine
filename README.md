@@ -26,9 +26,10 @@ The agent pipeline automatically:
 2. **Forecasts:** Projects 30 days ahead using an ARIMA + Prophet ensemble, complete with confidence bands.
 3. **Detects Anomalies:** Identifies statistical anomalies via Z-score, Isolation Forest, and Bollinger band breaches.
 4. **Evaluates Risk:** Computes critical risk metrics including Sharpe ratio, VaR (95/99), max drawdown, beta, and volatility.
-5. **Generates Reports:** Drafts a clean Markdown report summarizing the findings.
-6. **Visualizes Results:** Renders a gorgeous, highly accurate Candlestick chart overlaid with the forecast and anomalies using `matplotlib`.
-7. **Dual Export Options:** Provides a seamless, flash-free download of a comprehensive **Professional PDF** report, as well as a pure **Markdown (.md)** download option for developers and raw data processing.
+5. **Generates Reports:** Drafts a massive, 2-page deep-dive AI Synthesis report covering methodology, market microstructure, and macroeconomics.
+6. **Visualizes Results:** Renders a gorgeous, highly interactive Candlestick chart overlaid with the forecast using `TradingView Lightweight Charts`.
+7. **Ultra-Compact UI:** Features an intelligent CSS Grid layout designed to fit critical data on a single screen while offering a smooth scrolling mechanism for deep-dive texts.
+8. **Professional Exports:** Includes a robust PDF generator that outputs a branded, highly-aesthetic, formatted document, as well as a pure Markdown option.
 
 ---
 
@@ -42,8 +43,8 @@ User Request (Web Dashboard)
                                                 ├ Anomaly     ├──► Critique ──► Report Writer
                                                 └ Risk        ┘                     │
                                                                                     ▼
-                                                                              Interactive Dark-Mode UI
-                                                                          (Charts & PDF Download)
+                                                                     Interactive, Compact Web UI
+                                                             (Lightweight Charts & Professional PDF Export)
 ```
 
 Each agent lives in `app/agents/`. The orchestration graph is defined in `app/agent.py`, the web interface is served via FastAPI in `app/server.py`, and the quantitative analytical logic is isolated in `app/core/`.
