@@ -654,6 +654,92 @@ body {
     color: var(--text-muted);
 }
 
+/* Drawing Toolbar */
+.drawing-toolbar {
+    position: absolute;
+    top: 10px;
+    left: -45px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem;
+    backdrop-filter: blur(16px);
+    z-index: 10;
+}
+
+.tool-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.3rem;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+}
+
+.tool-btn:hover {
+    color: var(--neon-cyan);
+    background: rgba(0, 243, 255, 0.1);
+}
+
+.tool-btn.active {
+    color: var(--neon-cyan);
+    background: rgba(0, 243, 255, 0.15);
+    border: 1px solid rgba(0, 243, 255, 0.3);
+}
+
+.tool-color-picker {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    background: transparent;
+}
+.tool-color-picker::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+.tool-color-picker::-webkit-color-swatch {
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 50%;
+}
+
+/* Zoom Controls Overlay */
+.zoom-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 0.5rem;
+    z-index: 10;
+}
+
+.zoom-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    font-size: 1.2rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: var(--transition);
+}
+
+.zoom-btn:hover {
+    background: rgba(0, 243, 255, 0.1);
+    color: var(--neon-cyan);
+    border-color: var(--neon-cyan);
+}
+
 /* Media Queries for Responsiveness */
 @media (max-width: 1200px) {
     .dashboard-grid {

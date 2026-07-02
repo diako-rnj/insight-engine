@@ -19,6 +19,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.2.1/dist/chartjs-chart-financial.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
     
     <link rel="stylesheet" href="/static/style.css">
 </head>
@@ -27,21 +28,23 @@
     
     <div class="dashboard-layout">
         <!-- Sidebar Navigation -->
-        <aside class="sidebar panel">
+        <nav class="sidebar panel">
             <div class="brand-icon">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--neon-cyan)" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--neon-cyan)" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
             </div>
-            <nav class="nav-icons">
-                <div class="nav-icon active" id="nav-overview" title="Dashboard Overview"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></div>
-                <div class="nav-icon" id="nav-chart" title="Full Screen Chart"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>
-                <div class="nav-icon" id="nav-risk" title="Deep Risk Metrics"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></div>
-                <div class="nav-icon" title="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg></div>
-            </nav>
-            <div class="nav-icon bottom-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></div>
-        </aside>
+            <div class="nav-icons">
+                <!-- Overview -->
+                <div class="nav-icon active" id="nav-overview" title="Overview"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></div>
+                <!-- Full Chart -->
+                <div class="nav-icon" id="nav-chart" title="Deep Chart"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>
+                <!-- Risk Analysis -->
+                <div class="nav-icon" id="nav-risk" title="Deep Risk"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>
+            </div>
+            <div class="nav-icon bottom-icon" title="Logout"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></div>
+        </nav>
 
         <main class="dashboard-main">
-            <!-- Topbar Control Panel -->
+            <!-- Topbar -->
             <header class="topbar panel">
                 <div class="topbar-title">
                     <h2>Dashboard</h2>
@@ -96,21 +99,33 @@
             <!-- Loading State -->
             <section id="loading-state" class="loading-state hidden">
                 <div class="spinner"></div>
-                <p>Synthesizing Data...</p>
+                <p style="color: var(--neon-cyan); letter-spacing: 2px;">SYNTHESIZING MARKET DATA...</p>
             </section>
 
-            <!-- Dashboard Grid -->
-            <div id="dashboard-grid" class="dashboard-grid hidden">
+            <!-- Dynamic Dashboard Grid -->
+            <section id="dashboard-grid" class="dashboard-grid hidden">
                 
-                <!-- Main Chart -->
-                <div class="panel widget main-chart-widget">
+                <!-- Main Chart Widget -->
+                <div class="widget panel main-chart-widget">
                     <div class="widget-header">
-                        <h3>Financial Performance Panel</h3>
-                        <div class="widget-controls">
-                            <span class="badge">Live</span>
-                        </div>
+                        <h3>Financial Performance</h3>
+                        <span class="badge" id="chart-badge">LIVE</span>
                     </div>
-                    <div class="widget-body">
+                    <div class="widget-body" style="position: relative;">
+                        <!-- Drawing Toolbar Overlay -->
+                        <div class="drawing-toolbar">
+                            <button id="tool-pointer" class="tool-btn active" title="Pointer (Pan)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path></svg></button>
+                            <button id="tool-line" class="tool-btn" title="Trend Line"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="19" x2="19" y2="5"></line></svg></button>
+                            <button id="tool-clear" class="tool-btn" title="Clear Drawings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                            <input type="color" id="tool-color" class="tool-color-picker" value="#00f3ff" title="Line Color">
+                        </div>
+                        
+                        <!-- Zoom Buttons Overlay -->
+                        <div class="zoom-controls">
+                            <button id="zoom-in-btn" class="zoom-btn" title="Zoom In">+</button>
+                            <button id="zoom-out-btn" class="zoom-btn" title="Zoom Out">−</button>
+                        </div>
+                        
                         <canvas id="mainChart"></canvas>
                     </div>
                 </div>

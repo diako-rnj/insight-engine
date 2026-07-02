@@ -3,6 +3,15 @@ let currentTicker = "";
 let mainChartInstance = null;
 let volumeChartInstance = null;
 
+// Drawing & Zoom State
+let drawMode = 'pointer'; // 'pointer' or 'line'
+let isDrawing = false;
+let startXVal = null;
+let startYVal = null;
+let currentLineId = null;
+let annotationColor = '#00f3ff';
+let chartAnnotations = {};
+
 // Hardcoded popular market symbols for predictive search
 const POPULAR_SYMBOLS = [
     { symbol: "AAPL", name: "Apple Inc." },
@@ -348,13 +357,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 plugins: {
                     legend: { display: false },
+                    annotation: {
+                        annotations: chartAnnotations
+                    },
                     zoom: {
                         pan: {
                             enabled: true,
                             mode: 'x'
                         },
                         zoom: {
-                            wheel: { enabled: true },
+                            wheel: { enabled: false }, // disabled scroll zoom
                             pinch: { enabled: true },
                             mode: 'x'
                         }
@@ -362,6 +374,85 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
+
+        // Initialize Zoom Buttons
+        document.getElementById('zoom-in-btn').onclick = () => mainChartInstance.zoom(1.1);
+        document.getElementById('zoom-out-btn').onclick = () => mainChartInstance.zoom(0.9);
+
+        // Initialize Drawing Toolbar
+        const btnPointer = document.getElementById('tool-pointer');
+        const btnLine = document.getElementById('tool-line');
+        const btnClear = document.getElementById('tool-clear');
+        const colorPicker = document.getElementById('tool-color');
+
+        const updateToolState = (mode) => {
+            drawMode = mode;
+            btnPointer.classList.toggle('active', mode === 'pointer');
+            btnLine.classList.toggle('active', mode === 'line');
+            mainChartInstance.options.plugins.zoom.pan.enabled = (mode === 'pointer');
+            mainChartInstance.update('none');
+        };
+
+        btnPointer.onclick = () => updateToolState('pointer');
+        btnLine.onclick = () => updateToolState('line');
+        btnClear.onclick = () => {
+            chartAnnotations = {};
+            mainChartInstance.options.plugins.annotation.annotations = chartAnnotations;
+            mainChartInstance.update();
+        };
+        colorPicker.onchange = (e) => annotationColor = e.target.value;
+
+        // Interactive Canvas Drawing Engine
+        const canvas = document.getElementById('mainChart');
+        
+        canvas.onmousedown = (e) => {
+            if (drawMode !== 'line') return;
+            isDrawing = true;
+            
+            const rect = canvas.getBoundingClientRect();
+            const xPixel = e.clientX - rect.left;
+            const yPixel = e.clientY - rect.top;
+            
+            startXVal = mainChartInstance.scales.x.getValueForPixel(xPixel);
+            startYVal = mainChartInstance.scales.y.getValueForPixel(yPixel);
+            
+            currentLineId = 'line_' + Date.now();
+            chartAnnotations[currentLineId] = {
+                type: 'line',
+                xMin: startXVal,
+                xMax: startXVal,
+                yMin: startYVal,
+                yMax: startYVal,
+                borderColor: annotationColor,
+                borderWidth: 2,
+                borderDash: [5, 5] // dashed while drawing
+            };
+            mainChartInstance.update('none');
+        };
+
+        canvas.onmousemove = (e) => {
+            if (!isDrawing || drawMode !== 'line') return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const xPixel = e.clientX - rect.left;
+            const yPixel = e.clientY - rect.top;
+            
+            const curXVal = mainChartInstance.scales.x.getValueForPixel(xPixel);
+            const curYVal = mainChartInstance.scales.y.getValueForPixel(yPixel);
+            
+            chartAnnotations[currentLineId].xMax = curXVal;
+            chartAnnotations[currentLineId].yMax = curYVal;
+            mainChartInstance.update('none');
+        };
+
+        canvas.onmouseup = () => {
+            if (!isDrawing || drawMode !== 'line') return;
+            isDrawing = false;
+            // Solidify the line
+            chartAnnotations[currentLineId].borderDash = [];
+            mainChartInstance.update('none');
+        };
+        canvas.onmouseleave = canvas.onmouseup;
 
         // Volume Chart (Keep as Bar chart)
         const volCtx = document.getElementById('volumeChart').getContext('2d');
@@ -395,7 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     legend: { display: false },
                     zoom: {
                         pan: { enabled: true, mode: 'x' },
-                        zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
+                        zoom: { wheel: { enabled: false }, pinch: { enabled: true }, mode: 'x' }
                     }
                 }
             }
