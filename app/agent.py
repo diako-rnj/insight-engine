@@ -73,6 +73,7 @@ def run_pipeline(
         "ticker": ticker,
         "trace": trace,
         "data_source": data["source"],
+        "data": data,
         "forecast": forecast,
         "anomalies": anomalies,
         "risk": risk,
