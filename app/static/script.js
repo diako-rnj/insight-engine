@@ -11,6 +11,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const exportPanel = document.getElementById('export-panel');
     const reportContent = document.getElementById('report-content');
     
+    // Sidebar Navigation Logic
+    const navOverview = document.getElementById('nav-overview');
+    const navChart = document.getElementById('nav-chart');
+    const navRisk = document.getElementById('nav-risk');
+    
+    function switchView(viewName, activeNav) {
+        // Reset nav states
+        [navOverview, navChart, navRisk].forEach(nav => nav && nav.classList.remove('active'));
+        if (activeNav) activeNav.classList.add('active');
+        
+        // Reset grid views
+        dashboardGrid.classList.remove('view-chart', 'view-risk');
+        
+        if (viewName === 'chart') {
+            dashboardGrid.classList.add('view-chart');
+        } else if (viewName === 'risk') {
+            dashboardGrid.classList.add('view-risk');
+        }
+    }
+
+    if (navOverview) navOverview.addEventListener('click', () => switchView('overview', navOverview));
+    if (navChart) navChart.addEventListener('click', () => switchView('chart', navChart));
+    if (navRisk) navRisk.addEventListener('click', () => switchView('risk', navRisk));
+
     // Set default Chart.js settings for the Sci-Fi theme
     Chart.defaults.color = '#8b949e';
     Chart.defaults.font.family = "'Inter', sans-serif";

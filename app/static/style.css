@@ -240,6 +240,28 @@ body {
     letter-spacing: 0.5px;
 }
 
+/* Tab View States */
+.view-chart .risk-widget,
+.view-chart .anomaly-widget,
+.view-chart .mini-chart-widget,
+.view-chart .metric-widget {
+    display: none !important;
+}
+.view-chart .main-chart-widget {
+    grid-column: 1 / -1;
+    grid-row: 1 / -1;
+}
+
+.view-risk .main-chart-widget,
+.view-risk .mini-chart-widget,
+.view-risk .anomaly-widget {
+    display: none !important;
+}
+.view-risk .risk-widget {
+    grid-column: 1 / -1;
+    grid-row: 1 / -1;
+}
+
 .widget-body {
     flex-grow: 1;
     position: relative;
