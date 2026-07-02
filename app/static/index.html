@@ -42,9 +42,11 @@
                     <h2>Dashboard</h2>
                 </div>
                 <form id="run-form" class="topbar-controls">
-                    <div class="search-input">
+                    <div class="search-input" style="position: relative;">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="text" id="ticker" name="ticker" value="AAPL" required autocomplete="off" placeholder="Ticker (e.g. AAPL)">
+                        <input type="text" id="ticker" name="ticker" value="" required autocomplete="off" placeholder="Search Ticker (e.g. AAPL)">
+                        <!-- Predictive Search Dropdown -->
+                        <div id="search-dropdown" class="search-dropdown hidden"></div>
                     </div>
                     <div class="dropdown-input">
                         <select id="months" name="months">

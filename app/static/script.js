@@ -3,6 +3,32 @@ let currentTicker = "";
 let mainChartInstance = null;
 let volumeChartInstance = null;
 
+// Hardcoded popular market symbols for predictive search
+const POPULAR_SYMBOLS = [
+    { symbol: "AAPL", name: "Apple Inc." },
+    { symbol: "MSFT", name: "Microsoft Corp." },
+    { symbol: "GOOGL", name: "Alphabet Inc." },
+    { symbol: "AMZN", name: "Amazon.com Inc." },
+    { symbol: "META", name: "Meta Platforms" },
+    { symbol: "TSLA", name: "Tesla Inc." },
+    { symbol: "NVDA", name: "NVIDIA Corp." },
+    { symbol: "JPM", name: "JPMorgan Chase" },
+    { symbol: "V", name: "Visa Inc." },
+    { symbol: "JNJ", name: "Johnson & Johnson" },
+    { symbol: "WMT", name: "Walmart Inc." },
+    { symbol: "PG", name: "Procter & Gamble" },
+    { symbol: "MA", name: "Mastercard Inc." },
+    { symbol: "UNH", name: "UnitedHealth Group" },
+    { symbol: "HD", name: "Home Depot" },
+    { symbol: "BAC", name: "Bank of America" },
+    { symbol: "DIS", name: "Walt Disney Co." },
+    { symbol: "NFLX", name: "Netflix Inc." },
+    { symbol: "BTC-USD", name: "Bitcoin" },
+    { symbol: "ETH-USD", name: "Ethereum" },
+    { symbol: "SPY", name: "S&P 500 ETF" },
+    { symbol: "QQQ", name: "Invesco QQQ Trust" }
+];
+
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('run-form');
     const submitBtn = document.getElementById('submit-btn');
@@ -48,6 +74,50 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Predictive Search Logic
+    const tickerInput = document.getElementById('ticker');
+    const searchDropdown = document.getElementById('search-dropdown');
+
+    if (tickerInput && searchDropdown) {
+        tickerInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            searchDropdown.innerHTML = '';
+            
+            if (query.length === 0) {
+                searchDropdown.classList.add('hidden');
+                return;
+            }
+
+            const matches = POPULAR_SYMBOLS.filter(s => 
+                s.symbol.toLowerCase().includes(query) || 
+                s.name.toLowerCase().includes(query)
+            ).slice(0, 5); // show top 5
+
+            if (matches.length > 0) {
+                searchDropdown.classList.remove('hidden');
+                matches.forEach(match => {
+                    const div = document.createElement('div');
+                    div.className = 'search-item';
+                    div.innerHTML = `<span class="search-symbol">${match.symbol}</span><span class="search-name">${match.name}</span>`;
+                    div.addEventListener('click', () => {
+                        tickerInput.value = match.symbol;
+                        searchDropdown.classList.add('hidden');
+                    });
+                    searchDropdown.appendChild(div);
+                });
+            } else {
+                searchDropdown.classList.add('hidden');
+            }
+        });
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!tickerInput.contains(e.target) && !searchDropdown.contains(e.target)) {
+                searchDropdown.classList.add('hidden');
+            }
+        });
+    }
+
     // Set default Chart.js settings for the Sci-Fi theme
     Chart.defaults.color = '#8b949e';
     Chart.defaults.font.family = "'Inter', sans-serif";
@@ -76,9 +146,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const months = document.getElementById('months').value;
 
         try {
+            const timestamp = new Date().getTime();
             const params = new URLSearchParams({
                 ticker: ticker,
-                months: months
+                months: months,
+                _t: timestamp // cache buster
             });
 
             const response = await fetch(`/api/run?${params.toString()}`);
@@ -87,9 +159,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
             
             // Wait for charts to be generated and saved, then fetch the image for PDF
-            const timestamp = new Date().getTime(); 
+            const chartTimestamp = new Date().getTime(); 
             const chartImg = document.getElementById('chart-image');
-            chartImg.src = `/artifacts/charts/${ticker}_chart.png?t=${timestamp}`;
+            chartImg.src = `/artifacts/charts/${ticker}_chart.png?t=${chartTimestamp}`;
             
             renderDashboard(result, ticker);
             renderExportPanel(result, ticker);
