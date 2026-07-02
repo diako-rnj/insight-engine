@@ -1,84 +1,253 @@
+let currentMarkdownReport = "";
+let currentTicker = "";
+let mainChartInstance = null;
+let volumeChartInstance = null;
+
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('run-form');
     const submitBtn = document.getElementById('submit-btn');
     const loadingState = document.getElementById('loading-state');
-    const resultsPanel = document.getElementById('results-panel');
+    const dashboardGrid = document.getElementById('dashboard-grid');
+    const exportPanel = document.getElementById('export-panel');
     const reportContent = document.getElementById('report-content');
-    const chartImage = document.getElementById('chart-image');
     
-    let currentMarkdownReport = "";
-    let currentTicker = "";
+    // Set default Chart.js settings for the Sci-Fi theme
+    Chart.defaults.color = '#8b949e';
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(0,0,0,0.8)';
+    Chart.defaults.plugins.tooltip.titleColor = '#00f3ff';
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         // Hide results and show loading
-        resultsPanel.classList.add('hidden');
+        dashboardGrid.classList.add('hidden');
+        exportPanel.classList.add('hidden');
         loadingState.classList.remove('hidden');
         submitBtn.disabled = true;
+        submitBtn.innerText = "Synthesizing...";
         submitBtn.style.opacity = '0.5';
+        
         const ticker = document.getElementById('ticker').value.toUpperCase();
         const months = document.getElementById('months').value;
 
         try {
-            // Build query params
             const params = new URLSearchParams({
                 ticker: ticker,
                 months: months
             });
 
-            // Call the backend API
             const response = await fetch(`/api/run?${params.toString()}`);
-            
-            if (!response.ok) {
-                throw new Error('Pipeline execution failed');
-            }
+            if (!response.ok) throw new Error('Pipeline execution failed');
 
             const result = await response.json();
             
-            // Render the results
-            renderResults(result, ticker);
+            // Wait for charts to be generated and saved, then fetch the image for PDF
+            const timestamp = new Date().getTime(); 
+            const chartImg = document.getElementById('chart-image');
+            chartImg.src = `/artifacts/charts/${ticker}_chart.png?t=${timestamp}`;
+            
+            renderDashboard(result, ticker);
+            renderExportPanel(result, ticker);
 
         } catch (error) {
             console.error(error);
             alert(`Error: ${error.message}`);
         } finally {
-            // Re-enable button
             submitBtn.disabled = false;
+            submitBtn.innerText = "Run Analysis";
             submitBtn.style.opacity = '1';
             loadingState.classList.add('hidden');
         }
     });
 
-    function renderResults(result, ticker) {
-        // Show the panel
-        resultsPanel.classList.remove('hidden');
+    function renderDashboard(result, ticker) {
+        dashboardGrid.classList.remove('hidden');
         
-        // Render Markdown Report
-        if (result.report && result.report.markdown) {
-            currentMarkdownReport = result.report.markdown;
-            currentTicker = ticker;
-            reportContent.innerHTML = marked.parse(result.report.markdown);
-        } else if (result.report && result.report.summary) {
-            currentMarkdownReport = result.report.summary;
-            currentTicker = ticker;
-            reportContent.innerHTML = marked.parse(result.report.summary);
+        const closePrices = result.data.close;
+        const volume = result.data.volume;
+        const currentPrice = closePrices[closePrices.length - 1];
+        
+        const forecastPoint = result.forecast.point;
+        const targetPrice = forecastPoint[forecastPoint.length - 1];
+        
+        // Render Bottom Metrics
+        document.getElementById('val-current-price').innerText = currentPrice.toFixed(2);
+        document.getElementById('val-target-price').innerText = targetPrice.toFixed(2);
+        
+        // Render Risk Metrics
+        const metrics = result.risk.metrics;
+        document.getElementById('val-volatility').innerText = metrics.annualized_volatility_pct ? metrics.annualized_volatility_pct + '%' : 'N/A';
+        document.getElementById('val-drawdown').innerText = metrics.max_drawdown_pct ? metrics.max_drawdown_pct + '%' : 'N/A';
+        document.getElementById('val-var95').innerText = metrics.var_95_pct ? metrics.var_95_pct + '%' : 'N/A';
+        document.getElementById('val-var99').innerText = metrics.var_99_pct ? metrics.var_99_pct + '%' : 'N/A';
+        
+        // Update Gauges
+        // Sharpe usually between -1 and 3. Map to 0-100 for gauge.
+        let sharpe = metrics.sharpe_ratio || 0;
+        let sharpeGaugeVal = Math.min(Math.max((sharpe + 1) * 25, 0), 100); 
+        updateSVGOffset('gauge-risk', sharpeGaugeVal);
+        document.getElementById('val-sharpe').innerText = sharpe.toFixed(2);
+        
+        // Confidence usually High/Medium/Low, or percentage. Let's map Critique confidence
+        let confidenceStr = result.critique.confidence || "Unknown";
+        let confScore = 50;
+        if (confidenceStr.toLowerCase() === 'high') confScore = 90;
+        if (confidenceStr.toLowerCase() === 'medium') confScore = 60;
+        if (confidenceStr.toLowerCase() === 'low') confScore = 30;
+        updateSVGOffset('gauge-score', confScore);
+        document.getElementById('val-confidence').innerText = confidenceStr;
+
+        // Render Anomalies
+        const anomalyList = document.getElementById('anomaly-list');
+        anomalyList.innerHTML = '';
+        if (result.anomalies.found && result.anomalies.anomalies.length > 0) {
+            result.anomalies.anomalies.forEach(a => {
+                const li = document.createElement('li');
+                li.className = 'anomaly-item';
+                li.innerHTML = `
+                    <div class="anomaly-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
+                    <div class="anomaly-content">
+                        <span class="anomaly-title">${a.kind}</span>
+                        <span class="anomaly-date">${a.date} - ${a.severity}</span>
+                    </div>
+                `;
+                anomalyList.appendChild(li);
+            });
         } else {
-            currentMarkdownReport = "";
-            reportContent.innerHTML = "<p>No report found.</p>";
+            anomalyList.innerHTML = `<li style="color: var(--neon-cyan); padding: 1rem; text-align: center;">System Nominal. No statistical anomalies detected.</li>`;
         }
 
-        // Display Chart
-        // The charts are saved in artifacts/charts/TICKER_chart.png
-        // We exposed /artifacts in FastAPI
-        const timestamp = new Date().getTime(); // to prevent caching
-        chartImage.src = `/artifacts/charts/${ticker}_chart.png?t=${timestamp}`;
-        chartImage.classList.remove('hidden');
-        
-        // Scroll to results smoothly
-        resultsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Render Chart.js
+        renderCharts(result);
     }
 
+    function updateSVGOffset(id, percentage) {
+        // Total dasharray length for the half-circle is ~125.6
+        // offset 125.6 = empty, offset 0 = full
+        const path = document.getElementById(id);
+        if(path) {
+            const offset = 125.6 - (percentage / 100 * 125.6);
+            path.style.strokeDashoffset = offset;
+        }
+    }
+
+    function renderCharts(result) {
+        const histClose = result.data.close;
+        const forecastPoint = result.forecast.point;
+        
+        // Create labels: [ -N days ... 0, +1 days ... +M days ]
+        const labels = [];
+        const histData = [];
+        const fcData = [];
+        
+        for(let i=0; i<histClose.length; i++) {
+            labels.push(`D-${histClose.length - i}`);
+            histData.push(histClose[i]);
+            fcData.push(null);
+        }
+        
+        // Connect the last historical point to the first forecast point
+        fcData[histClose.length - 1] = histClose[histClose.length - 1];
+        
+        for(let i=0; i<forecastPoint.length; i++) {
+            labels.push(`F+${i+1}`);
+            histData.push(null);
+            fcData.push(forecastPoint[i]);
+        }
+
+        // Main Chart
+        const ctxMain = document.getElementById('mainChart').getContext('2d');
+        if (mainChartInstance) mainChartInstance.destroy();
+        
+        mainChartInstance = new Chart(ctxMain, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Historical Close',
+                        data: histData,
+                        borderColor: '#00f3ff',
+                        backgroundColor: 'rgba(0, 243, 255, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Forecast',
+                        data: fcData,
+                        borderColor: '#ff8a00',
+                        borderDash: [5, 5],
+                        borderWidth: 2,
+                        fill: false,
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { display: false }, // hide x-axis for a cleaner sci-fi look
+                    y: { 
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        border: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        // Volume Chart
+        const volCtx = document.getElementById('volumeChart').getContext('2d');
+        if (volumeChartInstance) volumeChartInstance.destroy();
+        
+        const volLabels = result.data.volume.map((_, i) => i);
+        
+        volumeChartInstance = new Chart(volCtx, {
+            type: 'bar',
+            data: {
+                labels: volLabels,
+                datasets: [{
+                    label: 'Volume',
+                    data: result.data.volume,
+                    backgroundColor: 'rgba(0, 243, 255, 0.3)',
+                    borderRadius: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { display: false },
+                    y: { display: false }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+
+    function renderExportPanel(result, ticker) {
+        exportPanel.classList.remove('hidden');
+        
+        if (result.report && result.report.markdown) {
+            currentMarkdownReport = result.report.markdown;
+        } else if (result.report && result.report.summary) {
+            currentMarkdownReport = result.report.summary;
+        }
+        
+        currentTicker = ticker;
+        reportContent.innerHTML = marked.parse(currentMarkdownReport);
+    }
+
+    // PDF and MD Export Logic
     const downloadBtn = document.getElementById('download-btn');
     if (downloadBtn) {
         downloadBtn.addEventListener('click', () => {
@@ -86,24 +255,24 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const element = document.getElementById('pdf-content');
             
-            // Create a dark overlay to hide the white-background transition
             const overlay = document.createElement('div');
             overlay.style.position = 'fixed';
             overlay.style.top = '0';
             overlay.style.left = '0';
             overlay.style.width = '100vw';
             overlay.style.height = '100vh';
-            overlay.style.backgroundColor = 'var(--bg-color)';
+            overlay.style.backgroundColor = '#0B0E14';
             overlay.style.zIndex = '9999';
             overlay.style.display = 'flex';
             overlay.style.flexDirection = 'column';
             overlay.style.alignItems = 'center';
             overlay.style.justifyContent = 'center';
-            overlay.innerHTML = '<div class="spinner"></div><p style="margin-top: 1rem; color: var(--text-main);">Generating Professional PDF...</p>';
+            overlay.innerHTML = '<div class="spinner"></div><p style="margin-top: 1rem; color: #e2e8f0;">Generating Professional PDF...</p>';
             document.body.appendChild(overlay);
 
-            // Temporarily mutate live DOM for perfect html2pdf capture
             element.classList.add('pdf-export-mode');
+            const chartImage = document.getElementById('chart-image');
+            if (chartImage) chartImage.classList.remove('hidden');
             
             const pdfHeader = document.createElement('div');
             pdfHeader.id = 'temp-pdf-header';
@@ -130,16 +299,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
             
-            // Allow DOM to update before capturing
             setTimeout(() => {
                 html2pdf().set(opt).from(element).save().then(() => {
-                    // Revert mutations
                     element.classList.remove('pdf-export-mode');
                     const tempHeader = document.getElementById('temp-pdf-header');
                     if (tempHeader) tempHeader.remove();
                     if (wasExtendedHidden && extended) {
                         extended.style.display = 'none';
                     }
+                    if (chartImage) chartImage.classList.add('hidden');
                     document.body.removeChild(overlay);
                 });
             }, 300);

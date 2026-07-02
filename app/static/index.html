@@ -7,128 +7,250 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <!-- Marked library for rendering Markdown -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- Chart.js for glowing interactive charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <div class="glass-background"></div>
     
-    <main class="container">
-        <header class="header">
-            <div class="brand">
-                <span class="logo">📈</span>
-                <h1>Insight Engine</h1>
+    <div class="dashboard-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar panel">
+            <div class="brand-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--neon-cyan)" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
             </div>
-            <p class="subtitle">Autonomous Financial Forecasting & Anomaly Detection</p>
-        </header>
+            <nav class="nav-icons">
+                <div class="nav-icon active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></div>
+                <div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>
+                <div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg></div>
+                <div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></div>
+            </nav>
+            <div class="nav-icon bottom-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></div>
+        </aside>
 
-        <section class="control-panel panel">
-            <form id="run-form" class="form">
-                <div class="input-group">
-                    <label for="ticker">Ticker Symbol</label>
-                    <input type="text" id="ticker" name="ticker" value="AAPL" required autocomplete="off" placeholder="e.g. AAPL, MSFT">
+        <main class="dashboard-main">
+            <!-- Topbar Control Panel -->
+            <header class="topbar panel">
+                <div class="topbar-title">
+                    <h2>Dashboard</h2>
                 </div>
-                
-                <div class="input-group">
-                    <label for="months">Timeframe (Months)</label>
-                    <input type="number" id="months" name="months" value="6" min="1" max="60" required>
-                </div>
-
-
-
-                <button type="submit" id="submit-btn" class="btn primary-btn">
-                    <span>Run Analysis</span>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                </button>
-            </form>
-        </section>
-
-        <!-- Loading State -->
-        <section id="loading-state" class="loading-state hidden">
-            <div class="spinner"></div>
-        </section>
-
-        <!-- Results Section -->
-        <section id="results-panel" class="results-panel panel hidden">
-            <div id="pdf-content">
-                <header class="results-header">
-                    <h2>Analysis Complete</h2>
-                    <div class="badges">
-                        <span class="badge badge-success" id="hitl-status">HITL: Dry Run</span>
+                <form id="run-form" class="topbar-controls">
+                    <div class="search-input">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="ticker" name="ticker" value="AAPL" required autocomplete="off" placeholder="Ticker (e.g. AAPL)">
                     </div>
-                </header>
-                <div class="chart-container">
-                    <img id="chart-image" src="" alt="Financial Forecast Chart" class="hidden">
+                    <div class="dropdown-input">
+                        <select id="months" name="months">
+                            <option value="3">3 Months</option>
+                            <option value="6" selected>6 Months</option>
+                            <option value="12">1 Year</option>
+                        </select>
+                    </div>
+                    <button type="submit" id="submit-btn" class="run-btn">Run Analysis</button>
+                </form>
+                <div class="topbar-icons">
+                    <div class="status-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--neon-orange)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
+                    <div class="status-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg></div>
+                    <div class="user-avatar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-main)" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>
+                </div>
+            </header>
+
+            <!-- Loading State -->
+            <section id="loading-state" class="loading-state hidden">
+                <div class="spinner"></div>
+                <p>Synthesizing Data...</p>
+            </section>
+
+            <!-- Dashboard Grid -->
+            <div id="dashboard-grid" class="dashboard-grid hidden">
+                
+                <!-- Main Chart -->
+                <div class="panel widget main-chart-widget">
+                    <div class="widget-header">
+                        <h3>Financial Performance Panel</h3>
+                        <div class="widget-controls">
+                            <span class="badge">Live</span>
+                        </div>
+                    </div>
+                    <div class="widget-body">
+                        <canvas id="mainChart"></canvas>
+                    </div>
                 </div>
 
-                <div class="markdown-body" id="report-content">
-                    <!-- Markdown rendered here -->
+                <!-- Risk Metrics -->
+                <div class="panel widget risk-widget">
+                    <div class="widget-header">
+                        <h3>Risk Metrics</h3>
+                        <div class="widget-controls">•••</div>
+                    </div>
+                    <div class="widget-body risk-body">
+                        <div class="stats-grid">
+                            <div class="stat-box">
+                                <span class="stat-label">Volatility (Ann.)</span>
+                                <span class="stat-value" id="val-volatility">--</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-label">Max Drawdown</span>
+                                <span class="stat-value" id="val-drawdown">--</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-label">VaR (95%)</span>
+                                <span class="stat-value" id="val-var95">--</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-label">VaR (99%)</span>
+                                <span class="stat-value" id="val-var99">--</span>
+                            </div>
+                        </div>
+                        <div class="gauges-container">
+                            <div class="gauge">
+                                <svg viewBox="0 0 100 50">
+                                    <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="12" />
+                                    <path id="gauge-risk" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="var(--neon-orange)" stroke-width="12" stroke-dasharray="125.6" stroke-dashoffset="60" />
+                                </svg>
+                                <span>Sharpe</span>
+                                <strong id="val-sharpe">--</strong>
+                            </div>
+                            <div class="gauge">
+                                <svg viewBox="0 0 100 50">
+                                    <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="12" />
+                                    <path id="gauge-score" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="var(--neon-cyan)" stroke-width="12" stroke-dasharray="125.6" stroke-dashoffset="20" />
+                                </svg>
+                                <span>Confidence</span>
+                                <strong id="val-confidence">--</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Anomaly Detection -->
+                <div class="panel widget anomaly-widget">
+                    <div class="widget-header">
+                        <h3>Anomaly Detection</h3>
+                        <div class="widget-controls">•••</div>
+                    </div>
+                    <div class="widget-body">
+                        <ul class="anomaly-list" id="anomaly-list">
+                            <!-- Injected dynamically -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Bottom Panels -->
+                <div class="panel widget mini-chart-widget">
+                    <div class="widget-header">
+                        <h3>Volume Trend</h3>
+                        <div class="widget-controls"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>
+                    </div>
+                    <div class="widget-body">
+                        <canvas id="volumeChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="panel widget metric-widget">
+                    <div class="widget-body centered">
+                        <span class="metric-label">Current Price</span>
+                        <h2 class="metric-big-value cyan-text" id="val-current-price">--</h2>
+                    </div>
+                </div>
+
+                <div class="panel widget metric-widget">
+                    <div class="widget-body centered">
+                        <span class="metric-label">Target Price (30d)</span>
+                        <h2 class="metric-big-value orange-text" id="val-target-price">--</h2>
+                    </div>
                 </div>
                 
-                <div style="text-align: center; margin-top: 10px;" id="read-more-container">
-                    <button id="read-more-btn" class="btn" style="padding: 0.2rem 0.5rem; font-size: 1.2rem; background: transparent; color: var(--text-muted); box-shadow: none;">•••</button>
-                </div>
+            </div>
+
+            <!-- Export Panel containing Markdown & Chart Image for PDF generation -->
+            <div id="export-panel" class="panel export-panel hidden">
                 
-                <div class="markdown-body pdf-only" id="pdf-extended-methodology" style="display: none;">
-                    <hr style="margin: 2rem 0;">
-                    <h2>Deep Dive: Analytical Methodology</h2>
-                    <p>This report extends the executive summary with a comprehensive breakdown of the multi-agent orchestration pipeline and quantitative models used to evaluate the asset.</p>
+                <div class="export-controls">
+                    <h3>Executive Summary</h3>
+                    <div class="btn-group">
+                        <button id="download-btn" class="btn neutral-btn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            <span>Download PDF</span>
+                        </button>
+                        <button id="download-md-btn" class="btn neutral-btn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            <span>Download MD</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hidden PDF Container: Used exclusively for html2pdf targeting -->
+                <div id="pdf-content" class="pdf-content-wrapper">
+                    <div class="chart-container">
+                        <!-- Static image generated by backend, used for PDF export since Canvas doesn't always clone well -->
+                        <img id="chart-image" src="" alt="Financial Forecast Chart" class="hidden">
+                    </div>
                     
-                    <h3>1. Data Ingestion & Integrity</h3>
-                    <p>The Insight Engine fetches high-fidelity Open, High, Low, Close, and Volume (OHLCV) data directly from live market feeds. To ensure data integrity, the pipeline employs fallback caching and strict type-checking at the boundary. The dataset spans the exact timeframe requested, capturing both macroeconomic drift and micro-level volatility.</p>
+                    <div class="markdown-body" id="report-content">
+                        <!-- Markdown rendered here -->
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 10px;" id="read-more-container">
+                        <button id="read-more-btn" class="btn" style="padding: 0.2rem 0.5rem; font-size: 1.2rem; background: transparent; color: var(--text-muted); box-shadow: none;">•••</button>
+                    </div>
+                    
+                    <div class="markdown-body pdf-only" id="pdf-extended-methodology" style="display: none;">
+                        <hr style="margin: 2rem 0;">
+                        <h2>Deep Dive: Analytical Methodology</h2>
+                        <p>This report extends the executive summary with a comprehensive breakdown of the multi-agent orchestration pipeline and quantitative models used to evaluate the asset.</p>
+                        
+                        <h3>1. Data Ingestion & Integrity</h3>
+                        <p>The Insight Engine fetches high-fidelity Open, High, Low, Close, and Volume (OHLCV) data directly from live market feeds. To ensure data integrity, the pipeline employs fallback caching and strict type-checking at the boundary. The dataset spans the exact timeframe requested, capturing both macroeconomic drift and micro-level volatility.</p>
 
-                    <h3>2. Forecasting Engine: ARIMA + Prophet Ensemble</h3>
-                    <p>Our forecasting agent relies on a sophisticated ensemble method to project price action for the next 30 trading days.</p>
-                    <ul>
-                        <li><strong>ARIMA (Auto-Regressive Integrated Moving Average):</strong> Captures the asset's momentum and mean-reversion characteristics by analyzing its own lagged values.</li>
-                        <li><strong>Prophet:</strong> A robust additive model designed by Meta that excels at handling missing daily data and abrupt trend shifts.</li>
-                        <li><strong>Ensemble Synthesis:</strong> By blending both models, we neutralize their individual weaknesses. The 95% Confidence Interval (CI) represents the statistical certainty boundary—a wider band indicates higher expected market turbulence.</li>
-                    </ul>
+                        <h3>2. Forecasting Engine: ARIMA + Prophet Ensemble</h3>
+                        <p>Our forecasting agent relies on a sophisticated ensemble method to project price action for the next 30 trading days.</p>
+                        <ul>
+                            <li><strong>ARIMA (Auto-Regressive Integrated Moving Average):</strong> Captures the asset's momentum and mean-reversion characteristics by analyzing its own lagged values.</li>
+                            <li><strong>Prophet:</strong> A robust additive model designed by Meta that excels at handling missing daily data and abrupt trend shifts.</li>
+                            <li><strong>Ensemble Synthesis:</strong> By blending both models, we neutralize their individual weaknesses. The 95% Confidence Interval (CI) represents the statistical certainty boundary—a wider band indicates higher expected market turbulence.</li>
+                        </ul>
 
-                    <h3>3. Anomaly Detection Systems</h3>
-                    <p>Financial anomalies often precede massive market movements. We deploy three independent algorithms to flag them:</p>
-                    <ul>
-                        <li><strong>Isolation Forests:</strong> An unsupervised machine learning algorithm that isolates outliers by randomly partitioning the dataset. Highly effective at detecting structural breaks in trading behavior.</li>
-                        <li><strong>Rolling Z-Scores:</strong> We calculate a rolling standard deviation of daily volume. Any volume spike exceeding predefined Z-score thresholds triggers a severity alert, indicating institutional accumulation or distribution.</li>
-                        <li><strong>Bollinger Band Breaches:</strong> We monitor price excursions beyond 2 standard deviations from the 20-day Simple Moving Average (SMA) to identify overbought or oversold exhaustion points.</li>
-                    </ul>
+                        <h3>3. Anomaly Detection Systems</h3>
+                        <p>Financial anomalies often precede massive market movements. We deploy three independent algorithms to flag them:</p>
+                        <ul>
+                            <li><strong>Isolation Forests:</strong> An unsupervised machine learning algorithm that isolates outliers by randomly partitioning the dataset. Highly effective at detecting structural breaks in trading behavior.</li>
+                            <li><strong>Rolling Z-Scores:</strong> We calculate a rolling standard deviation of daily volume. Any volume spike exceeding predefined Z-score thresholds triggers a severity alert, indicating institutional accumulation or distribution.</li>
+                            <li><strong>Bollinger Band Breaches:</strong> We monitor price excursions beyond 2 standard deviations from the 20-day Simple Moving Average (SMA) to identify overbought or oversold exhaustion points.</li>
+                        </ul>
 
-                    <h3>4. Quantitative Risk Assessment</h3>
-                    <p>Raw returns are meaningless without risk context. The engine computes institutional-grade risk metrics:</p>
-                    <ul>
-                        <li><strong>Sharpe Ratio:</strong> Calculates the risk-adjusted return. A ratio above 1.0 indicates excellent returns relative to the volatility endured.</li>
-                        <li><strong>Value at Risk (VaR):</strong> Estimates the maximum expected loss over a set period at a 95% and 99% confidence level, providing a worst-case scenario floor.</li>
-                        <li><strong>Maximum Drawdown:</strong> The largest historical peak-to-trough drop in the asset's price, serving as a historical stress test.</li>
-                    </ul>
+                        <h3>4. Quantitative Risk Assessment</h3>
+                        <p>Raw returns are meaningless without risk context. The engine computes institutional-grade risk metrics:</p>
+                        <ul>
+                            <li><strong>Sharpe Ratio:</strong> Calculates the risk-adjusted return. A ratio above 1.0 indicates excellent returns relative to the volatility endured.</li>
+                            <li><strong>Value at Risk (VaR):</strong> Estimates the maximum expected loss over a set period at a 95% and 99% confidence level, providing a worst-case scenario floor.</li>
+                            <li><strong>Maximum Drawdown:</strong> The largest historical peak-to-trough drop in the asset's price, serving as a historical stress test.</li>
+                        </ul>
 
-                    <p><em>Note: The Insight Engine autonomously critiques its own models and will flag warnings if the forecast confidence falls below acceptable thresholds.</em></p>
+                        <p><em>Note: The Insight Engine autonomously critiques its own models and will flag warnings if the forecast confidence falls below acceptable thresholds.</em></p>
+                    </div>
                 </div>
-            </div>
 
-            <div class="results-footer" style="gap: 1rem;">
-                <button id="download-btn" class="btn neutral-btn">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    <span>Download PDF</span>
-                </button>
-                <button id="download-md-btn" class="btn neutral-btn">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                        <polyline points="10 9 9 9 8 9"></polyline>
-                    </svg>
-                    <span>Download MD</span>
-                </button>
             </div>
-        </section>
-    </main>
+        </main>
+    </div>
 
     <script src="/static/script.js"></script>
 </body>
