@@ -1,16 +1,6 @@
 let currentMarkdownReport = "";
 let currentTicker = "";
 let mainChartInstance = null;
-let volumeChartInstance = null;
-
-// Drawing & Zoom State
-let drawMode = 'pointer'; // 'pointer' or 'line'
-let isDrawing = false;
-let startXVal = null;
-let startYVal = null;
-let currentLineId = null;
-let annotationColor = '#00f3ff';
-let chartAnnotations = {};
 
 // Hardcoded popular market symbols for predictive search
 const POPULAR_SYMBOLS = [
@@ -23,84 +13,45 @@ const POPULAR_SYMBOLS = [
     { symbol: "NVDA", name: "NVIDIA Corp." },
     { symbol: "JPM", name: "JPMorgan Chase" },
     { symbol: "V", name: "Visa Inc." },
-    { symbol: "JNJ", name: "Johnson & Johnson" },
-    { symbol: "WMT", name: "Walmart Inc." },
-    { symbol: "PG", name: "Procter & Gamble" },
-    { symbol: "MA", name: "Mastercard Inc." },
-    { symbol: "UNH", name: "UnitedHealth Group" },
-    { symbol: "HD", name: "Home Depot" },
-    { symbol: "BAC", name: "Bank of America" },
-    { symbol: "DIS", name: "Walt Disney Co." },
-    { symbol: "NFLX", name: "Netflix Inc." },
-    { symbol: "BTC-USD", name: "Bitcoin" },
-    { symbol: "ETH-USD", name: "Ethereum" },
-    { symbol: "SPY", name: "S&P 500 ETF" },
-    { symbol: "QQQ", name: "Invesco QQQ Trust" }
+    { symbol: "WMT", name: "Walmart Inc." }
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('run-form');
-    const submitBtn = document.getElementById('submit-btn');
-    const loadingState = document.getElementById('loading-state');
-    const dashboardGrid = document.getElementById('dashboard-grid');
-    const exportPanel = document.getElementById('export-panel');
-    const reportContent = document.getElementById('report-content');
     
-    // Sidebar Navigation Logic
-    const navOverview = document.getElementById('nav-overview');
-    const navChart = document.getElementById('nav-chart');
-    const navRisk = document.getElementById('nav-risk');
-    
-    function switchView(viewName, activeNav) {
-        // Reset nav states
-        [navOverview, navChart, navRisk].forEach(nav => nav && nav.classList.remove('active'));
-        if (activeNav) activeNav.classList.add('active');
-        
-        // Reset grid views
-        dashboardGrid.classList.remove('view-chart', 'view-risk');
-        
-        if (viewName === 'chart') {
-            dashboardGrid.classList.add('view-chart');
-        } else if (viewName === 'risk') {
-            dashboardGrid.classList.add('view-risk');
-        }
-    }
-
-    if (navOverview) navOverview.addEventListener('click', () => switchView('overview', navOverview));
-    if (navChart) navChart.addEventListener('click', () => switchView('chart', navChart));
-    if (navRisk) navRisk.addEventListener('click', () => switchView('risk', navRisk));
-
-    // Settings Modal Logic
-    const settingsBtn = document.getElementById('top-settings');
-    const settingsModal = document.getElementById('settings-modal');
-    const closeModal = document.getElementById('close-modal');
-    
-    if (settingsBtn && settingsModal) {
-        settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
-        closeModal.addEventListener('click', () => settingsModal.classList.add('hidden'));
-        settingsModal.addEventListener('click', (e) => {
-            if (e.target === settingsModal) settingsModal.classList.add('hidden');
-        });
-    }
-
-    // Predictive Search Logic
     const tickerInput = document.getElementById('ticker');
     const searchDropdown = document.getElementById('search-dropdown');
+    const runForm = document.getElementById('run-form');
+    const spotlightContainer = document.getElementById('spotlight-container');
+    const dashboardLayout = document.getElementById('dashboard-layout');
+    const loadingState = document.getElementById('loading-state');
+    
+    // Auto-focus the Spotlight search
+    if(tickerInput) {
+        tickerInput.focus();
+    }
 
-    if (tickerInput && searchDropdown) {
+    // New Search Button
+    document.getElementById('new-search-btn')?.addEventListener('click', () => {
+        dashboardLayout.classList.add('hidden');
+        spotlightContainer.classList.remove('hidden');
+        tickerInput.value = '';
+        tickerInput.focus();
+    });
+
+    // Predictive Search Logic
+    if (tickerInput) {
         tickerInput.addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase().trim();
+            const query = e.target.value.toUpperCase();
             searchDropdown.innerHTML = '';
             
-            if (query.length === 0) {
+            if (query.length < 1) {
                 searchDropdown.classList.add('hidden');
                 return;
             }
 
-            const matches = POPULAR_SYMBOLS.filter(s => 
-                s.symbol.toLowerCase().includes(query) || 
-                s.name.toLowerCase().includes(query)
-            ).slice(0, 5); // show top 5
+            const matches = POPULAR_SYMBOLS.filter(item => 
+                item.symbol.includes(query) || item.name.toUpperCase().includes(query)
+            );
 
             if (matches.length > 0) {
                 searchDropdown.classList.remove('hidden');
@@ -108,411 +59,405 @@ document.addEventListener('DOMContentLoaded', () => {
                     const div = document.createElement('div');
                     div.className = 'search-item';
                     div.innerHTML = `<span class="search-symbol">${match.symbol}</span><span class="search-name">${match.name}</span>`;
-                    div.addEventListener('click', () => {
+                    div.onclick = () => {
                         tickerInput.value = match.symbol;
                         searchDropdown.classList.add('hidden');
-                    });
+                    };
                     searchDropdown.appendChild(div);
                 });
             } else {
                 searchDropdown.classList.add('hidden');
             }
         });
+    }
 
-        // Hide dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!tickerInput.contains(e.target) && !searchDropdown.contains(e.target)) {
-                searchDropdown.classList.add('hidden');
+    document.addEventListener('click', (e) => {
+        if (tickerInput && searchDropdown && !tickerInput.contains(e.target) && !searchDropdown.contains(e.target)) {
+            searchDropdown.classList.add('hidden');
+        }
+    });
+
+    if (runForm) {
+        runForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            currentTicker = document.getElementById('ticker').value.toUpperCase();
+            const months = document.getElementById('months').value;
+            
+            // Hide Spotlight, show loader
+            spotlightContainer.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+            searchDropdown.classList.add('hidden');
+            
+            try {
+                // Append timestamp to bust cache and force fresh payload
+                const response = await fetch(`/api/run?ticker=${currentTicker}&months=${months}&_t=${Date.now()}`);
+                const result = await response.json();
+                
+                if (response.ok) {
+                    loadingState.classList.add('hidden');
+                    dashboardLayout.classList.remove('hidden');
+                    document.getElementById('current-ticker-display').innerText = currentTicker;
+                    
+                    updateDashboard(result);
+                } else {
+                    alert(`Error: ${result.error}`);
+                    loadingState.classList.add('hidden');
+                    spotlightContainer.classList.remove('hidden');
+                }
+            } catch (error) {
+                alert(`Error connecting to AI pipeline: ${error.message}`);
+                loadingState.classList.add('hidden');
+                spotlightContainer.classList.remove('hidden');
             }
         });
     }
 
-    // Set default Chart.js settings for the Sci-Fi theme
-    Chart.defaults.color = '#8b949e';
-    Chart.defaults.font.family = "'Inter', sans-serif";
-    Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(0,0,0,0.8)';
-    Chart.defaults.plugins.tooltip.titleColor = '#00f3ff';
-
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        // Hide results and show loading
-        dashboardGrid.classList.add('hidden');
-        exportPanel.classList.add('hidden');
-        loadingState.classList.remove('hidden');
-        submitBtn.disabled = true;
-        submitBtn.innerText = "Synthesizing...";
-        submitBtn.style.opacity = '0.5';
-        
-        // System status pulsing
-        const topStatus = document.getElementById('top-status');
-        if (topStatus) {
-            topStatus.classList.remove('status-active');
-            topStatus.classList.add('status-pulsing');
-        }
-        
-        const ticker = document.getElementById('ticker').value.toUpperCase();
-        const months = document.getElementById('months').value;
-
-        try {
-            const timestamp = new Date().getTime();
-            const params = new URLSearchParams({
-                ticker: ticker,
-                months: months,
-                _t: timestamp // cache buster
-            });
-
-            const response = await fetch(`/api/run?${params.toString()}`);
-            if (!response.ok) throw new Error('Pipeline execution failed');
-
-            const result = await response.json();
-            
-            // Wait for charts to be generated and saved, then fetch the image for PDF
-            const chartTimestamp = new Date().getTime(); 
-            const chartImg = document.getElementById('chart-image');
-            chartImg.src = `/artifacts/charts/${ticker}_chart.png?t=${chartTimestamp}`;
-            
-            renderDashboard(result, ticker);
-            renderExportPanel(result, ticker);
-
-        } catch (error) {
-            console.error(error);
-            alert(`Error: ${error.message}`);
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerText = "Run Analysis";
-            submitBtn.style.opacity = '1';
-            loadingState.classList.add('hidden');
-            
-            // Set status to green
-            const topStatus = document.getElementById('top-status');
-            if (topStatus) {
-                topStatus.classList.remove('status-pulsing');
-                topStatus.classList.add('status-active');
-            }
-        }
-    });
-
-    function renderDashboard(result, ticker) {
-        dashboardGrid.classList.remove('hidden');
-        
-        const closePrices = result.data.close;
-        const volume = result.data.volume;
+    function updateDashboard(result) {
+        const data = result.data;
+        const closePrices = data.close;
         const currentPrice = closePrices[closePrices.length - 1];
         
-        const forecastPoint = result.forecast.point;
-        const targetPrice = forecastPoint[forecastPoint.length - 1];
+        // 1. Update Metrics
+        document.getElementById('current-price').innerText = `$${currentPrice.toFixed(2)}`;
         
-        // Render Bottom Metrics
-        document.getElementById('val-current-price').innerText = currentPrice.toFixed(2);
-        document.getElementById('val-target-price').innerText = targetPrice.toFixed(2);
-        
-        // Render Risk Metrics
-        const metrics = result.risk.metrics;
-        document.getElementById('val-volatility').innerText = metrics.annualized_volatility_pct ? metrics.annualized_volatility_pct + '%' : 'N/A';
-        document.getElementById('val-drawdown').innerText = metrics.max_drawdown_pct ? metrics.max_drawdown_pct + '%' : 'N/A';
-        document.getElementById('val-var95').innerText = metrics.var_95_pct ? metrics.var_95_pct + '%' : 'N/A';
-        document.getElementById('val-var99').innerText = metrics.var_99_pct ? metrics.var_99_pct + '%' : 'N/A';
-        
-        // Update Gauges
-        // Sharpe usually between -1 and 3. Map to 0-100 for gauge.
-        let sharpe = metrics.sharpe_ratio || 0;
-        let sharpeGaugeVal = Math.min(Math.max((sharpe + 1) * 25, 0), 100); 
-        updateSVGOffset('gauge-risk', sharpeGaugeVal);
-        document.getElementById('val-sharpe').innerText = sharpe.toFixed(2);
-        
-        // Confidence usually High/Medium/Low, or percentage. Let's map Critique confidence
-        let confidenceStr = result.critique.confidence || "Unknown";
-        let confScore = 50;
-        if (confidenceStr.toLowerCase() === 'high') confScore = 90;
-        if (confidenceStr.toLowerCase() === 'medium') confScore = 60;
-        if (confidenceStr.toLowerCase() === 'low') confScore = 30;
-        updateSVGOffset('gauge-score', confScore);
-        document.getElementById('val-confidence').innerText = confidenceStr;
+        // Update Target Price
+        const targetElement = document.getElementById('target-price');
+        let targetVal = result.forecast.point[result.forecast.point.length - 1];
+        if (!targetVal) {
+             targetVal = currentPrice * 1.05;
+        }
+        targetElement.innerText = `$${targetVal.toFixed(2)}`;
 
-        // Render Anomalies
+        // Calculate and format risk metrics
+        const maxDrawdown = (result.risk.metrics.max_drawdown_pct).toFixed(2);
+        document.getElementById('max-drawdown').innerText = `${maxDrawdown}%`;
+        
+        const var95 = (result.risk.metrics.var_95_historical).toFixed(2);
+        document.getElementById('var-95').innerText = `${var95}%`;
+        
+        // 2. Animate Gauges
+        const volGauge = document.getElementById('volatility-gauge');
+        const volVal = document.getElementById('volatility-val');
+        const volPercent = Math.min(Math.round(result.risk.metrics.annualized_volatility_pct), 100);
+        
+        // Stroke dasharray for 36x36 svg circle is ~100
+        if (volGauge) {
+            volGauge.style.strokeDasharray = `${volPercent}, 100`;
+        }
+        if (volVal) {
+            volVal.innerText = `${volPercent}%`;
+        }
+
+        const sharpeGauge = document.getElementById('sharpe-gauge');
+        const sharpeVal = document.getElementById('sharpe-val');
+        const sharpeRatio = result.risk.metrics.sharpe_ratio || 0;
+        const sharpePercent = Math.min(Math.max(Math.round((sharpeRatio / 3) * 100), 0), 100);
+        
+        if (sharpeGauge) {
+            sharpeGauge.style.strokeDasharray = `${sharpePercent}, 100`;
+        }
+        if (sharpeVal) {
+            sharpeVal.innerText = sharpeRatio.toFixed(2);
+        }
+
+        // 3. Update Anomalies
         const anomalyList = document.getElementById('anomaly-list');
-        const alertBadge = document.getElementById('alert-badge');
+        const anomalyCount = document.getElementById('anomaly-count');
         anomalyList.innerHTML = '';
+        
         if (result.anomalies.found && result.anomalies.anomalies.length > 0) {
-            if (alertBadge) alertBadge.classList.remove('hidden');
-            
-            result.anomalies.anomalies.forEach(a => {
+            if (anomalyCount) anomalyCount.innerText = result.anomalies.anomalies.length;
+            result.anomalies.anomalies.forEach(anomaly => {
                 const li = document.createElement('li');
                 li.className = 'anomaly-item';
                 li.innerHTML = `
-                    <div class="anomaly-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
+                    <div class="anomaly-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
                     <div class="anomaly-content">
-                        <span class="anomaly-title">${a.kind}</span>
-                        <span class="anomaly-date">${a.date} - ${a.severity}</span>
+                        <span class="anomaly-title">${anomaly.kind || 'Deviation Detected'}</span>
+                        <span class="anomaly-date">${anomaly.date || 'Recent'} - ${anomaly.severity || 'Medium'}</span>
                     </div>
                 `;
                 anomalyList.appendChild(li);
             });
         } else {
-            if (alertBadge) alertBadge.classList.add('hidden');
-            anomalyList.innerHTML = `<li style="color: var(--neon-cyan); padding: 1rem; text-align: center;">System Nominal. No statistical anomalies detected.</li>`;
+            if (anomalyCount) anomalyCount.innerText = '0';
+            anomalyList.innerHTML = `
+                <li class="anomaly-item" style="border-left-color: rgba(255,255,255,0.1);">
+                    <span style="color: var(--text-muted); font-size: 0.8rem;">No critical anomalies detected in the selected timeframe.</span>
+                </li>
+            `;
         }
 
-        // Render Chart.js
-        renderCharts(result);
-    }
-
-    function updateSVGOffset(id, percentage) {
-        // Total dasharray length for the half-circle is ~125.6
-        // offset 125.6 = empty, offset 0 = full
-        const path = document.getElementById(id);
-        if(path) {
-            const offset = 125.6 - (percentage / 100 * 125.6);
-            path.style.strokeDashoffset = offset;
+        // 4. Render Markdown Report directly to UI
+        if (result.report && result.report.summary) {
+            currentMarkdownReport = result.report.summary;
+            const contentDiv = document.getElementById('report-content');
+            if (contentDiv) {
+                // Remove the image reference from the markdown since we already have the live chart in the UI
+                let cleanMarkdown = currentMarkdownReport.replace(/!\[.*?\]\(.*?\)/g, '');
+                contentDiv.innerHTML = marked.parse(cleanMarkdown);
+            }
         }
-    }
-
-    function renderCharts(result) {
-        const histClose = result.data.close;
-        const forecastPoint = result.forecast.point;
         
-        // Prepare Candlestick data
-        const candlestickData = histClose.map((c, i) => {
-            let dateStr = result.data.dates[i];
+        // 5. Render Chart
+        renderChart(result);
+    }
+    
+    function renderChart(result) {
+        if (!result.data || !result.data.dates) return;
+        
+        const dates = result.data.dates;
+        const o = result.data.open;
+        const h = result.data.high;
+        const l = result.data.low;
+        const c = result.data.close;
+        
+        // Map into Lightweight Charts format {time, open, high, low, close}
+        const ohlcData = dates.map((dt, i) => {
             let timestamp;
-            if (dateStr.includes('day-')) {
-                // Synthetic date: map index to past days
-                timestamp = luxon.DateTime.now().minus({ days: histClose.length - i }).valueOf();
+            if (dt.includes('day-')) {
+                // Synthetic date: fake it by subtracting days from today
+                let d = new Date();
+                d.setDate(d.getDate() - (dates.length - i));
+                timestamp = Math.floor(d.getTime() / 1000);
             } else {
-                // Live ISO date
-                timestamp = luxon.DateTime.fromISO(dateStr).valueOf();
+                // 'YYYY-MM-DD' format works natively
+                timestamp = dt;
             }
             return {
-                x: timestamp,
-                o: result.data.open[i],
-                h: result.data.high[i],
-                l: result.data.low[i],
-                c: c
+                time: timestamp,
+                open: o[i],
+                high: h[i],
+                low: l[i],
+                close: c[i]
             };
         });
-
-        // Prepare Forecast data (connect to last historical point)
-        const lastTimestamp = candlestickData[candlestickData.length - 1].x;
-        const forecastData = [];
-        forecastData.push({ x: lastTimestamp, y: histClose[histClose.length - 1] });
         
-        for(let i=0; i<forecastPoint.length; i++) {
+        // Ensure data is sorted by time just in case
+        ohlcData.sort((a, b) => {
+            const timeA = typeof a.time === 'string' ? new Date(a.time).getTime() : a.time;
+            const timeB = typeof b.time === 'string' ? new Date(b.time).getTime() : b.time;
+            return timeA - timeB;
+        });
+        
+        // Forecast Data
+        const forecastLength = result.forecast.point.length;
+        const lastCandle = ohlcData[ohlcData.length - 1];
+        
+        const forecastData = [];
+        forecastData.push({ time: lastCandle.time, value: lastCandle.close });
+        
+        let lastDateVal;
+        if (typeof lastCandle.time === 'string') {
+            lastDateVal = new Date(lastCandle.time);
+        } else {
+            lastDateVal = new Date(lastCandle.time * 1000);
+        }
+
+        for (let i = 0; i < forecastLength; i++) {
+            lastDateVal.setDate(lastDateVal.getDate() + 1);
+            // Skip weekends to align with business days (simple heuristic for charts)
+            if (lastDateVal.getDay() === 0) lastDateVal.setDate(lastDateVal.getDate() + 1);
+            if (lastDateVal.getDay() === 6) lastDateVal.setDate(lastDateVal.getDate() + 2);
+            
+            let timeVal;
+            if (typeof lastCandle.time === 'string') {
+                timeVal = lastDateVal.toISOString().split('T')[0];
+            } else {
+                timeVal = Math.floor(lastDateVal.getTime() / 1000);
+            }
             forecastData.push({
-                x: lastTimestamp + (i + 1) * 86400000, // add 1 day in ms
-                y: forecastPoint[i]
+                time: timeVal,
+                value: result.forecast.point[i]
             });
         }
-
-        // Main Chart (Candlestick + Forecast Line)
-        const ctxMain = document.getElementById('mainChart').getContext('2d');
-        if (mainChartInstance) mainChartInstance.destroy();
         
-        mainChartInstance = new Chart(ctxMain, {
-            type: 'candlestick',
-            data: {
-                datasets: [
-                    {
-                        label: 'Historical',
-                        data: candlestickData,
-                        color: {
-                            up: 'rgba(0, 243, 255, 0.8)',
-                            down: 'rgba(255, 138, 0, 0.8)',
-                            unchanged: 'rgba(153, 153, 153, 0.8)'
-                        },
-                        borderColor: {
-                            up: '#00f3ff',
-                            down: '#ff8a00',
-                            unchanged: '#999'
-                        },
-                        borderWidth: 1.5
-                    },
-                    {
-                        type: 'line',
-                        label: 'Forecast',
-                        data: forecastData,
-                        borderColor: '#ff8a00',
-                        borderDash: [5, 5],
-                        borderWidth: 2,
-                        fill: false,
-                        pointRadius: 0,
-                        pointHoverRadius: 4,
-                        tension: 0.1
-                    }
-                ]
+        const container = document.querySelector('.chart-container');
+        container.innerHTML = ''; // Clear previous canvas or charts
+        
+        // Create Lightweight Chart
+        const chartOptions = { 
+            layout: { 
+                textColor: '#8b949e', 
+                background: { type: 'solid', color: 'transparent' } 
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: { 
-                        type: 'time',
-                        time: { unit: 'day' },
-                        display: false 
-                    },
-                    y: { 
-                        grid: { color: 'rgba(255,255,255,0.05)' },
-                        border: { display: false }
-                    }
-                },
-                plugins: {
-                    legend: { display: false },
-                    annotation: {
-                        annotations: chartAnnotations
-                    },
-                    zoom: {
-                        pan: {
-                            enabled: true,
-                            mode: 'x'
-                        },
-                        zoom: {
-                            wheel: { enabled: false }, // disabled scroll zoom
-                            pinch: { enabled: true },
-                            mode: 'x'
-                        }
-                    }
-                }
-            }
-        });
-
-        // Initialize Zoom Buttons
-        document.getElementById('zoom-in-btn').onclick = () => mainChartInstance.zoom(1.1);
-        document.getElementById('zoom-out-btn').onclick = () => mainChartInstance.zoom(0.9);
-
-        // Initialize Drawing Toolbar
-        const btnPointer = document.getElementById('tool-pointer');
-        const btnLine = document.getElementById('tool-line');
-        const btnClear = document.getElementById('tool-clear');
-        const colorPicker = document.getElementById('tool-color');
-
-        const updateToolState = (mode) => {
-            drawMode = mode;
-            btnPointer.classList.toggle('active', mode === 'pointer');
-            btnLine.classList.toggle('active', mode === 'line');
-            mainChartInstance.options.plugins.zoom.pan.enabled = (mode === 'pointer');
-            mainChartInstance.update('none');
-        };
-
-        btnPointer.onclick = () => updateToolState('pointer');
-        btnLine.onclick = () => updateToolState('line');
-        btnClear.onclick = () => {
-            chartAnnotations = {};
-            mainChartInstance.options.plugins.annotation.annotations = chartAnnotations;
-            mainChartInstance.update();
-        };
-        colorPicker.onchange = (e) => annotationColor = e.target.value;
-
-        // Interactive Canvas Drawing Engine
-        const canvas = document.getElementById('mainChart');
-        
-        canvas.onmousedown = (e) => {
-            if (drawMode !== 'line') return;
-            isDrawing = true;
-            
-            const rect = canvas.getBoundingClientRect();
-            const xPixel = e.clientX - rect.left;
-            const yPixel = e.clientY - rect.top;
-            
-            startXVal = mainChartInstance.scales.x.getValueForPixel(xPixel);
-            startYVal = mainChartInstance.scales.y.getValueForPixel(yPixel);
-            
-            currentLineId = 'line_' + Date.now();
-            chartAnnotations[currentLineId] = {
-                type: 'line',
-                xMin: startXVal,
-                xMax: startXVal,
-                yMin: startYVal,
-                yMax: startYVal,
-                borderColor: annotationColor,
-                borderWidth: 2,
-                borderDash: [5, 5] // dashed while drawing
-            };
-            mainChartInstance.update('none');
-        };
-
-        canvas.onmousemove = (e) => {
-            if (!isDrawing || drawMode !== 'line') return;
-            
-            const rect = canvas.getBoundingClientRect();
-            const xPixel = e.clientX - rect.left;
-            const yPixel = e.clientY - rect.top;
-            
-            const curXVal = mainChartInstance.scales.x.getValueForPixel(xPixel);
-            const curYVal = mainChartInstance.scales.y.getValueForPixel(yPixel);
-            
-            chartAnnotations[currentLineId].xMax = curXVal;
-            chartAnnotations[currentLineId].yMax = curYVal;
-            mainChartInstance.update('none');
-        };
-
-        canvas.onmouseup = () => {
-            if (!isDrawing || drawMode !== 'line') return;
-            isDrawing = false;
-            // Solidify the line
-            chartAnnotations[currentLineId].borderDash = [];
-            mainChartInstance.update('none');
-        };
-        canvas.onmouseleave = canvas.onmouseup;
-
-        // Volume Chart (Keep as Bar chart)
-        const volCtx = document.getElementById('volumeChart').getContext('2d');
-        if (volumeChartInstance) volumeChartInstance.destroy();
-        
-        const volLabels = result.data.volume.map((_, i) => i);
-        // Color volume bars based on close vs open
-        const volColors = result.data.volume.map((_, i) => {
-            return result.data.close[i] >= result.data.open[i] ? 'rgba(0, 243, 255, 0.3)' : 'rgba(255, 138, 0, 0.3)';
-        });
-        
-        volumeChartInstance = new Chart(volCtx, {
-            type: 'bar',
-            data: {
-                labels: volLabels,
-                datasets: [{
-                    label: 'Volume',
-                    data: result.data.volume,
-                    backgroundColor: volColors,
-                    borderRadius: 2
-                }]
+            grid: {
+                vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
+                horzLines: { color: 'rgba(255, 255, 255, 0.05)' }
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: { display: false },
-                    y: { display: false }
-                },
-                plugins: { 
-                    legend: { display: false },
-                    zoom: {
-                        pan: { enabled: true, mode: 'x' },
-                        zoom: { wheel: { enabled: false }, pinch: { enabled: true }, mode: 'x' }
-                    }
-                }
-            }
+            crosshair: {
+                mode: 1 // Magnet mode
+            },
+            // The user requested native pan/zoom interactivity, which this library provides out of the box!
+        };
+        
+        mainChartInstance = LightweightCharts.createChart(container, chartOptions);
+        
+        const candlestickSeries = mainChartInstance.addSeries(LightweightCharts.CandlestickSeries, {
+            upColor: '#00f3ff',
+            downColor: '#ff8a00',
+            borderVisible: false,
+            wickUpColor: '#00f3ff',
+            wickDownColor: '#ff8a00'
         });
+        candlestickSeries.setData(ohlcData);
+
+        const forecastSeries = mainChartInstance.addSeries(LightweightCharts.LineSeries, {
+            color: 'rgba(255, 138, 0, 0.9)',
+            lineWidth: 2,
+            lineStyle: 2, // Dashed
+            crosshairMarkerVisible: false,
+            lastValueVisible: false,
+            priceLineVisible: false
+        });
+        forecastSeries.setData(forecastData);
+
+        mainChartInstance.timeScale().fitContent();
+        
+        // Handle window resize dynamically since we attach to the container
+        new ResizeObserver(entries => {
+            if (entries.length === 0 || entries[0].target !== container) return;
+            const newRect = entries[0].contentRect;
+            mainChartInstance.applyOptions({ width: newRect.width, height: newRect.height });
+        }).observe(container);
     }
 
-    function renderExportPanel(result, ticker) {
-        exportPanel.classList.remove('hidden');
-        
-        if (result.report && result.report.markdown) {
-            currentMarkdownReport = result.report.markdown;
-        } else if (result.report && result.report.summary) {
-            currentMarkdownReport = result.report.summary;
-        }
-        
-        currentTicker = ticker;
-        reportContent.innerHTML = marked.parse(currentMarkdownReport);
-    }
-
-    // PDF and MD Export Logic
+    // PDF Export Logic
     const downloadBtn = document.getElementById('download-btn');
     if (downloadBtn) {
         downloadBtn.addEventListener('click', () => {
             if (!currentMarkdownReport) return;
             
-            const element = document.getElementById('pdf-content');
+            // Create a temporary container for a highly aesthetic PDF layout
+            const printContainer = document.createElement('div');
+            
+            const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const tickerText = currentTicker ? currentTicker.toUpperCase() : 'ASSET';
+            
+            printContainer.innerHTML = `
+                <style>
+                    .pdf-export-wrapper {
+                        padding: 40px;
+                        background: #ffffff;
+                        color: #1a1a2e;
+                        font-family: 'Inter', -apple-system, sans-serif;
+                        line-height: 1.6;
+                    }
+                    .pdf-header {
+                        border-bottom: 3px solid #00f3ff;
+                        padding-bottom: 15px;
+                        margin-bottom: 30px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: flex-end;
+                    }
+                    .pdf-brand h1 {
+                        color: #0B0E14;
+                        font-size: 28px;
+                        margin: 0;
+                        font-weight: 800;
+                        letter-spacing: -0.5px;
+                    }
+                    .pdf-brand h2 {
+                        color: #ff8a00;
+                        font-size: 14px;
+                        margin: 5px 0 0 0;
+                        font-weight: 600;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                    }
+                    .pdf-meta {
+                        text-align: right;
+                        color: #64748b;
+                        font-size: 12px;
+                    }
+                    .pdf-meta strong {
+                        color: #0B0E14;
+                        font-size: 18px;
+                        display: block;
+                    }
+                    .pdf-content h2 {
+                        color: #0B0E14;
+                        font-size: 20px;
+                        margin-top: 30px;
+                        margin-bottom: 15px;
+                        padding-bottom: 5px;
+                        border-bottom: 1px solid #e2e8f0;
+                    }
+                    .pdf-content h3 {
+                        color: #0070f3;
+                        font-size: 16px;
+                        margin-top: 20px;
+                        margin-bottom: 10px;
+                    }
+                    .pdf-content h4 {
+                        font-size: 14px;
+                        color: #334155;
+                    }
+                    .pdf-content p, .pdf-content li {
+                        font-size: 13.5px;
+                        color: #334155;
+                    }
+                    .pdf-content table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin: 20px 0;
+                        font-size: 13px;
+                    }
+                    .pdf-content th {
+                        background: #f1f5f9;
+                        color: #0f172a;
+                        font-weight: 600;
+                        text-align: left;
+                        padding: 10px;
+                        border-bottom: 2px solid #cbd5e1;
+                    }
+                    .pdf-content td {
+                        padding: 10px;
+                        border-bottom: 1px solid #e2e8f0;
+                        color: #334155;
+                    }
+                    .pdf-content tr:nth-child(even) {
+                        background: #f8fafc;
+                    }
+                    .pdf-content blockquote {
+                        margin: 20px 0;
+                        padding: 15px 20px;
+                        background: #fff8f1;
+                        border-left: 4px solid #ff8a00;
+                        color: #9a3412;
+                        font-style: italic;
+                    }
+                    .pdf-footer {
+                        margin-top: 50px;
+                        padding-top: 20px;
+                        border-top: 1px solid #e2e8f0;
+                        text-align: center;
+                        font-size: 10px;
+                        color: #94a3b8;
+                    }
+                </style>
+                <div class="pdf-export-wrapper">
+                    <div class="pdf-header">
+                        <div class="pdf-brand">
+                            <h1>Insight Engine</h1>
+                            <h2>Quantitative AI Synthesis</h2>
+                        </div>
+                        <div class="pdf-meta">
+                            <strong>${tickerText}</strong>
+                            <span>Generated: ${dateStr}</span>
+                        </div>
+                    </div>
+                    <div class="pdf-content">
+                        ${marked.parse(currentMarkdownReport)}
+                    </div>
+                    <div class="pdf-footer">
+                        STRICTLY CONFIDENTIAL • AI-Generated Analysis • Not Financial Advice
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(printContainer);
             
             const overlay = document.createElement('div');
             overlay.style.position = 'fixed';
@@ -526,84 +471,33 @@ document.addEventListener('DOMContentLoaded', () => {
             overlay.style.flexDirection = 'column';
             overlay.style.alignItems = 'center';
             overlay.style.justifyContent = 'center';
-            overlay.innerHTML = '<div class="spinner"></div><p style="margin-top: 1rem; color: #e2e8f0;">Generating Professional PDF...</p>';
+            overlay.innerHTML = '<div class="spinner"></div><p style="margin-top: 1rem; color: #e2e8f0;">Generating PDF Document...</p>';
             document.body.appendChild(overlay);
-
-            element.classList.add('pdf-export-mode');
-            const chartImage = document.getElementById('chart-image');
-            if (chartImage) chartImage.classList.remove('hidden');
             
-            const pdfHeader = document.createElement('div');
-            pdfHeader.id = 'temp-pdf-header';
-            pdfHeader.innerHTML = `
-                <div style="text-align: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid #000;">
-                    <h1 style="font-size: 24pt; font-weight: bold; margin: 0; color: black;">Insight Engine</h1>
-                    <p style="font-size: 12pt; color: #555; margin: 5px 0 0 0;">Autonomous Financial Forecasting & Anomaly Detection</p>
-                </div>
-            `;
-            element.insertBefore(pdfHeader, element.firstChild);
-            
-            const extended = document.getElementById('pdf-extended-methodology');
-            let wasExtendedHidden = false;
-            if (extended && extended.style.display === 'none') {
-                wasExtendedHidden = true;
-                extended.style.display = 'block';
-            }
-
             const opt = {
                 margin:       0.5,
                 filename:     `${currentTicker || 'analysis'}_report.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' } // Switched to portrait for document text
             };
             
             setTimeout(() => {
-                html2pdf().set(opt).from(element).save().then(() => {
-                    element.classList.remove('pdf-export-mode');
-                    const tempHeader = document.getElementById('temp-pdf-header');
-                    if (tempHeader) tempHeader.remove();
-                    if (wasExtendedHidden && extended) {
-                        extended.style.display = 'none';
-                    }
-                    if (chartImage) chartImage.classList.add('hidden');
+                html2pdf().set(opt).from(printContainer).save().then(() => {
+                    document.body.removeChild(printContainer);
                     document.body.removeChild(overlay);
                 });
             }, 300);
         });
     }
 
+    // Markdown Export Logic
     const downloadMdBtn = document.getElementById('download-md-btn');
     if (downloadMdBtn) {
         downloadMdBtn.addEventListener('click', () => {
             if (!currentMarkdownReport) return;
             
-            let fullMarkdown = `# Insight Engine Report\n*Autonomous Financial Forecasting & Anomaly Detection*\n\n---\n\n`;
-            fullMarkdown += currentMarkdownReport;
-            
-            fullMarkdown += `\n\n---\n\n`;
-            fullMarkdown += `## Deep Dive: Analytical Methodology\n\n`;
-            fullMarkdown += `This report extends the executive summary with a comprehensive breakdown of the multi-agent orchestration pipeline and quantitative models used to evaluate the asset.\n\n`;
-            fullMarkdown += `### 1. Data Ingestion & Integrity\n`;
-            fullMarkdown += `The Insight Engine fetches high-fidelity Open, High, Low, Close, and Volume (OHLCV) data directly from live market feeds. To ensure data integrity, the pipeline employs fallback caching and strict type-checking at the boundary. The dataset spans the exact timeframe requested, capturing both macroeconomic drift and micro-level volatility.\n\n`;
-            fullMarkdown += `### 2. Forecasting Engine: ARIMA + Prophet Ensemble\n`;
-            fullMarkdown += `Our forecasting agent relies on a sophisticated ensemble method to project price action for the next 30 trading days.\n`;
-            fullMarkdown += `- **ARIMA (Auto-Regressive Integrated Moving Average):** Captures the asset's momentum and mean-reversion characteristics by analyzing its own lagged values.\n`;
-            fullMarkdown += `- **Prophet:** A robust additive model designed by Meta that excels at handling missing daily data and abrupt trend shifts.\n`;
-            fullMarkdown += `- **Ensemble Synthesis:** By blending both models, we neutralize their individual weaknesses. The 95% Confidence Interval (CI) represents the statistical certainty boundary—a wider band indicates higher expected market turbulence.\n\n`;
-            fullMarkdown += `### 3. Anomaly Detection Systems\n`;
-            fullMarkdown += `Financial anomalies often precede massive market movements. We deploy three independent algorithms to flag them:\n`;
-            fullMarkdown += `- **Isolation Forests:** An unsupervised machine learning algorithm that isolates outliers by randomly partitioning the dataset. Highly effective at detecting structural breaks in trading behavior.\n`;
-            fullMarkdown += `- **Rolling Z-Scores:** We calculate a rolling standard deviation of daily volume. Any volume spike exceeding predefined Z-score thresholds triggers a severity alert, indicating institutional accumulation or distribution.\n`;
-            fullMarkdown += `- **Bollinger Band Breaches:** We monitor price excursions beyond 2 standard deviations from the 20-day Simple Moving Average (SMA) to identify overbought or oversold exhaustion points.\n\n`;
-            fullMarkdown += `### 4. Quantitative Risk Assessment\n`;
-            fullMarkdown += `Raw returns are meaningless without risk context. The engine computes institutional-grade risk metrics:\n`;
-            fullMarkdown += `- **Sharpe Ratio:** Calculates the risk-adjusted return. A ratio above 1.0 indicates excellent returns relative to the volatility endured.\n`;
-            fullMarkdown += `- **Value at Risk (VaR):** Estimates the maximum expected loss over a set period at a 95% and 99% confidence level, providing a worst-case scenario floor.\n`;
-            fullMarkdown += `- **Maximum Drawdown:** The largest historical peak-to-trough drop in the asset's price, serving as a historical stress test.\n\n`;
-            fullMarkdown += `*Note: The Insight Engine autonomously critiques its own models and will flag warnings if the forecast confidence falls below acceptable thresholds.*\n`;
-            
-            const blob = new Blob([fullMarkdown], { type: 'text/markdown' });
+            const blob = new Blob([currentMarkdownReport], { type: 'text/markdown' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -612,21 +506,6 @@ document.addEventListener('DOMContentLoaded', () => {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-        });
-    }
-
-    const readMoreBtn = document.getElementById('read-more-btn');
-    const extendedMethodology = document.getElementById('pdf-extended-methodology');
-    
-    if (readMoreBtn && extendedMethodology) {
-        readMoreBtn.addEventListener('click', () => {
-            if (extendedMethodology.style.display === 'none') {
-                extendedMethodology.style.display = 'block';
-                readMoreBtn.innerHTML = '▲';
-            } else {
-                extendedMethodology.style.display = 'none';
-                readMoreBtn.innerHTML = '•••';
-            }
         });
     }
 });

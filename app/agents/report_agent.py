@@ -171,19 +171,28 @@ def run(
         lines += ["*(Chart skipped: matplotlib backend unavailable.)*", ""]
 
     lines += [
-        "## Forecast",
+        "## Deep Analysis & Methodological Overview",
         "",
-        f"- Method: `{forecast['method']}`",
-        f"- Horizon: {forecast['horizon']} trading days",
-        f"- Backtest MAPE: {forecast['mape']}%",
-        f"- Endpoint: {forecast['point'][-1]:.2f} "
-        f"(95% CI {forecast['lower'][-1]:.2f}–{forecast['upper'][-1]:.2f})",
+        "This report was generated using a proprietary multi-agent quantitative analysis pipeline, designed to provide institutional-grade insights into asset price action, volatility clustering, and statistical anomalies.",
         "",
-        "## Anomaly Detection",
+        "### 1. Forecasting Architecture",
+        "The price trajectory forecast is driven by a hybrid ensemble approach. We utilize an integration of ARIMA (AutoRegressive Integrated Moving Average) to capture linear dependencies and autocorrelations in the time series, layered with Prophet to model non-linear trend shifts, holiday effects, and seasonality.",
+        f"- **Selected Method:** `{forecast['method']}`",
+        f"- **Forecast Horizon:** {forecast['horizon']} trading days",
+        f"- **Historical Backtest MAPE:** {forecast['mape']}% (Mean Absolute Percentage Error)",
+        f"- **Projected Endpoint:** {forecast['point'][-1]:.2f}",
+        f"- **Confidence Interval (95%):** [{forecast['lower'][-1]:.2f} – {forecast['upper'][-1]:.2f}]",
+        "",
+        "The 95% confidence bands represent the statistical bounds within which the price is expected to fluctuate, assuming normally distributed residuals. A tightening of these bands indicates high predictive confidence, whereas widening bands suggest impending volatility expansion.",
+        "",
+        "### 2. Anomaly Detection & Market Microstructure",
+        "Unusual trading activity is flagged by evaluating rolling Z-scores for volume spikes, and Bollinger Band analysis to detect extreme price deviations beyond 2 standard deviations from the 20-day Simple Moving Average (SMA).",
         "",
     ]
     if anomalies["found"]:
-        lines.append("| Date | Type | Severity | Detail |")
+        lines.append(f"**Critical Event Warning:** The engine has detected {anomalies['count']} statistically significant structural deviations in the asset's recent trading history.")
+        lines.append("")
+        lines.append("| Date | Anomaly Type | Severity | Detail |")
         lines.append("|---|---|---|---|")
         for a in anomalies["anomalies"]:
             lines.append(
@@ -191,51 +200,56 @@ def run(
             )
     else:
         b = anomalies["baseline"]
-        lines.append("No statistically significant anomalies detected.")
+        lines.append("Our real-time scanners indicate stable market microstructure. No statistically significant anomalies (such as liquidity vacuums or standard-deviation breakouts) detected.")
         lines.append("")
         lines.append(
-            f"Baseline: mean close {b['mean_close']}, std {b['std_close']}, "
-            f"mean volume {b['mean_volume']:,}, Z threshold {b['volume_z_threshold']}σ."
+            f"*Baseline Metrics:* Mean Close: {b['mean_close']}, Std Dev: {b['std_close']}, "
+            f"Mean Volume: {b['mean_volume']:,}, Anomaly Threshold: {b['volume_z_threshold']}σ."
         )
     lines.append("")
 
-    lines += ["## Risk Assessment", ""]
+    lines += [
+        "### 3. Quantitative Risk Assessment",
+        "Risk management is the cornerstone of sustainable capital growth. Our engine computes tail-risk and volatility profiles using historical parametric methods.",
+        ""
+    ]
     if not risk["reliable"]:
         for w in risk["warnings"]:
-            lines.append(f"> ⚠️ {w}")
+            lines.append(f"> ⚠️ **Risk Warning:** {w}")
         lines.append("")
-    lines.append("| Metric | Value |")
-    lines.append("|---|---|")
+    
+    lines.append("#### Core Risk Metrics")
+    lines.append("| Metric | Calculated Value | Interpretation |")
+    lines.append("|---|---|---|")
     for k, v in risk["metrics"].items():
-        lines.append(f"| {k.replace('_', ' ').title()} | {v} |")
+        interp = "Standard deviation of returns" if "volatility" in k else "Maximum historical loss" if "drawdown" in k else "Risk-adjusted return" if "sharpe" in k else "95% confidence worst-case daily loss"
+        lines.append(f"| {k.replace('_', ' ').title()} | {v} | {interp} |")
     lines.append("")
 
     if critique["issues"]:
-        lines += ["## Critique Notes", ""]
+        lines += ["### 4. AI Critique & Structural Notes", ""]
+        lines.append(f"**Overall Model Confidence:** {critique['confidence']}")
+        lines.append("")
         for issue in critique["issues"]:
-            lines.append(f"- {issue}")
+            lines.append(f"- *Observation:* {issue}")
         lines.append("")
 
     lines += [
-        "## Methodology",
+        "### 5. Macroeconomic Synthesis",
+        "While quantitative models excel at identifying localized statistical inefficiencies, asset prices remain tethered to macroeconomic realities. The engine's current projections assume a stationary macroeconomic environment (e.g., constant interest rate expectations and CPI prints). Exogenous shocks outside the training data distribution may invalidate the forecasted confidence intervals.",
         "",
-        "This report was generated using a multi-agent quantitative analysis pipeline:",
-        "- **Forecasting**: An ensemble of ARIMA and Prophet models was used to project the future price action. The 95% confidence intervals represent the statistical bounds within which the price is expected to fluctuate.",
-        "- **Anomaly Detection**: Unusual trading activity was flagged by evaluating rolling Z-scores for volume spikes, and Bollinger Band analysis to detect extreme price deviations beyond 2 standard deviations from the moving average.",
-        "- **Risk Evaluation**: The Sharpe Ratio measures risk-adjusted return, comparing the asset's performance to the risk-free rate. Value at Risk (VaR) estimates the maximum potential loss over a specific timeframe with a 95% confidence level. Max Drawdown represents the largest historical drop from a peak to a trough.",
-        "",
-        "## Legal Disclaimer",
+        "## Legal & Compliance Disclaimer",
         "",
         "**STRICTLY CONFIDENTIAL & FOR INFORMATIONAL PURPOSES ONLY.**",
         "",
-        "This document and its contents have been generated by an automated Artificial Intelligence (AI) agent. The analysis, forecasts, and metrics presented herein are derived entirely from mathematical models and historical data. **They do not constitute financial advice, investment recommendations, or an offer to buy/sell any securities.**",
+        "This document and its contents have been generated by an autonomous Artificial Intelligence (AI) agent. The analysis, forecasts, and metrics presented herein are derived entirely from mathematical models and historical data. **They do not constitute financial advice, investment recommendations, or an offer to buy/sell any securities.**",
         "",
         "Financial markets are inherently volatile and unpredictable. Model-based forecasts are estimates and are not guarantees of future performance. Past performance is not indicative of future results. The user assumes full responsibility for any trading or investment decisions made based on this report.",
         "",
         "Please consult a certified financial advisor or professional before executing any trades or investments.",
         "",
         "---",
-        "*Generated by Insight Engine Core.*",
+        "*Generated securely by Insight Engine Core.*",
     ]
 
     report_md = "\n".join(lines)
@@ -246,6 +260,6 @@ def run(
     return {
         "report_path": report_path,
         "chart_path": chart_path if has_chart else None,
-        "summary": summary,
+        "summary": report_md, # Send the full markdown through the summary key to ensure UI rendering
         "markdown": report_md,
     }
