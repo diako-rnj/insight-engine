@@ -254,7 +254,8 @@ body {
 
 .view-risk .main-chart-widget,
 .view-risk .mini-chart-widget,
-.view-risk .anomaly-widget {
+.view-risk .anomaly-widget,
+.view-risk .metric-widget {
     display: none !important;
 }
 .view-risk .risk-widget {
