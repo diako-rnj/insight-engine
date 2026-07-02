@@ -549,3 +549,55 @@ body {
 .pdf-export-mode .pdf-only {
     display: block !important;
 }
+
+/* Modal & Badges */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    width: 400px;
+    max-width: 90%;
+    padding: 1.5rem;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 0.5rem;
+}
+
+.alert-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background: var(--neon-orange);
+    border-radius: 50%;
+    box-shadow: 0 0 5px var(--neon-orange);
+}
+
+.status-active {
+    color: #0f0 !important;
+    filter: drop-shadow(0 0 5px #0f0);
+}
+
+.status-pulsing {
+    color: var(--neon-cyan) !important;
+    animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+    from { filter: drop-shadow(0 0 2px var(--neon-cyan)); }
+    to { filter: drop-shadow(0 0 10px var(--neon-cyan)); }
+}

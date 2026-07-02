@@ -35,6 +35,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (navChart) navChart.addEventListener('click', () => switchView('chart', navChart));
     if (navRisk) navRisk.addEventListener('click', () => switchView('risk', navRisk));
 
+    // Settings Modal Logic
+    const settingsBtn = document.getElementById('top-settings');
+    const settingsModal = document.getElementById('settings-modal');
+    const closeModal = document.getElementById('close-modal');
+    
+    if (settingsBtn && settingsModal) {
+        settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+        closeModal.addEventListener('click', () => settingsModal.classList.add('hidden'));
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) settingsModal.classList.add('hidden');
+        });
+    }
+
     // Set default Chart.js settings for the Sci-Fi theme
     Chart.defaults.color = '#8b949e';
     Chart.defaults.font.family = "'Inter', sans-serif";
@@ -51,6 +64,13 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.disabled = true;
         submitBtn.innerText = "Synthesizing...";
         submitBtn.style.opacity = '0.5';
+        
+        // System status pulsing
+        const topStatus = document.getElementById('top-status');
+        if (topStatus) {
+            topStatus.classList.remove('status-active');
+            topStatus.classList.add('status-pulsing');
+        }
         
         const ticker = document.getElementById('ticker').value.toUpperCase();
         const months = document.getElementById('months').value;
@@ -82,6 +102,13 @@ document.addEventListener('DOMContentLoaded', () => {
             submitBtn.innerText = "Run Analysis";
             submitBtn.style.opacity = '1';
             loadingState.classList.add('hidden');
+            
+            // Set status to green
+            const topStatus = document.getElementById('top-status');
+            if (topStatus) {
+                topStatus.classList.remove('status-pulsing');
+                topStatus.classList.add('status-active');
+            }
         }
     });
 
@@ -124,8 +151,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Render Anomalies
         const anomalyList = document.getElementById('anomaly-list');
+        const alertBadge = document.getElementById('alert-badge');
         anomalyList.innerHTML = '';
         if (result.anomalies.found && result.anomalies.anomalies.length > 0) {
+            if (alertBadge) alertBadge.classList.remove('hidden');
+            
             result.anomalies.anomalies.forEach(a => {
                 const li = document.createElement('li');
                 li.className = 'anomaly-item';
@@ -139,6 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 anomalyList.appendChild(li);
             });
         } else {
+            if (alertBadge) alertBadge.classList.add('hidden');
             anomalyList.innerHTML = `<li style="color: var(--neon-cyan); padding: 1rem; text-align: center;">System Nominal. No statistical anomalies detected.</li>`;
         }
 
