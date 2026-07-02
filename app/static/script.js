@@ -263,49 +263,65 @@ document.addEventListener('DOMContentLoaded', () => {
         const histClose = result.data.close;
         const forecastPoint = result.forecast.point;
         
-        // Create labels: [ -N days ... 0, +1 days ... +M days ]
-        const labels = [];
-        const histData = [];
-        const fcData = [];
-        
-        for(let i=0; i<histClose.length; i++) {
-            labels.push(`D-${histClose.length - i}`);
-            histData.push(histClose[i]);
-            fcData.push(null);
-        }
-        
-        // Connect the last historical point to the first forecast point
-        fcData[histClose.length - 1] = histClose[histClose.length - 1];
+        // Prepare Candlestick data
+        const candlestickData = histClose.map((c, i) => {
+            let dateStr = result.data.dates[i];
+            let timestamp;
+            if (dateStr.includes('day-')) {
+                // Synthetic date: map index to past days
+                timestamp = luxon.DateTime.now().minus({ days: histClose.length - i }).valueOf();
+            } else {
+                // Live ISO date
+                timestamp = luxon.DateTime.fromISO(dateStr).valueOf();
+            }
+            return {
+                x: timestamp,
+                o: result.data.open[i],
+                h: result.data.high[i],
+                l: result.data.low[i],
+                c: c
+            };
+        });
+
+        // Prepare Forecast data (connect to last historical point)
+        const lastTimestamp = candlestickData[candlestickData.length - 1].x;
+        const forecastData = [];
+        forecastData.push({ x: lastTimestamp, y: histClose[histClose.length - 1] });
         
         for(let i=0; i<forecastPoint.length; i++) {
-            labels.push(`F+${i+1}`);
-            histData.push(null);
-            fcData.push(forecastPoint[i]);
+            forecastData.push({
+                x: lastTimestamp + (i + 1) * 86400000, // add 1 day in ms
+                y: forecastPoint[i]
+            });
         }
 
-        // Main Chart
+        // Main Chart (Candlestick + Forecast Line)
         const ctxMain = document.getElementById('mainChart').getContext('2d');
         if (mainChartInstance) mainChartInstance.destroy();
         
         mainChartInstance = new Chart(ctxMain, {
-            type: 'line',
+            type: 'candlestick',
             data: {
-                labels: labels,
                 datasets: [
                     {
-                        label: 'Historical Close',
-                        data: histData,
-                        borderColor: '#00f3ff',
-                        backgroundColor: 'rgba(0, 243, 255, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        pointRadius: 0,
-                        pointHoverRadius: 4,
-                        tension: 0.1
+                        label: 'Historical',
+                        data: candlestickData,
+                        color: {
+                            up: 'rgba(0, 243, 255, 0.8)',
+                            down: 'rgba(255, 138, 0, 0.8)',
+                            unchanged: 'rgba(153, 153, 153, 0.8)'
+                        },
+                        borderColor: {
+                            up: '#00f3ff',
+                            down: '#ff8a00',
+                            unchanged: '#999'
+                        },
+                        borderWidth: 1.5
                     },
                     {
+                        type: 'line',
                         label: 'Forecast',
-                        data: fcData,
+                        data: forecastData,
                         borderColor: '#ff8a00',
                         borderDash: [5, 5],
                         borderWidth: 2,
@@ -320,7 +336,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    x: { display: false }, // hide x-axis for a cleaner sci-fi look
+                    x: { 
+                        type: 'time',
+                        time: { unit: 'day' },
+                        display: false 
+                    },
                     y: { 
                         grid: { color: 'rgba(255,255,255,0.05)' },
                         border: { display: false }
@@ -332,11 +352,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Volume Chart
+        // Volume Chart (Keep as Bar chart)
         const volCtx = document.getElementById('volumeChart').getContext('2d');
         if (volumeChartInstance) volumeChartInstance.destroy();
         
         const volLabels = result.data.volume.map((_, i) => i);
+        // Color volume bars based on close vs open
+        const volColors = result.data.volume.map((_, i) => {
+            return result.data.close[i] >= result.data.open[i] ? 'rgba(0, 243, 255, 0.3)' : 'rgba(255, 138, 0, 0.3)';
+        });
         
         volumeChartInstance = new Chart(volCtx, {
             type: 'bar',
@@ -345,7 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 datasets: [{
                     label: 'Volume',
                     data: result.data.volume,
-                    backgroundColor: 'rgba(0, 243, 255, 0.3)',
+                    backgroundColor: volColors,
                     borderRadius: 2
                 }]
             },
