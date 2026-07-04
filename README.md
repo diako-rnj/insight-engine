@@ -12,7 +12,7 @@ Insight Engine is a multi-agent AI system that translates plain-English paramete
 It generates an accurate candlestick chart and drafts a fully formatted executive report. Users can click "Read More" to expand a comprehensive analytical methodology deep-dive, or download a professional, legally-sound PDF report directly from the interface.
 
 > **Kaggle 5-Day AI Agents Capstone** — **Agents for Business** track  
-> **Team:** Martin & Kasra
+> **Team:** CRM
 
 ---
 
