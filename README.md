@@ -103,6 +103,3 @@ insight_engine/
 
 ---
 
-## 📝 License
-
-This project's code is licensed under the **MIT License** (see `LICENSE`). If selected as a winning capstone submission, it will additionally be released under **CC-BY 4.0** as per the competition rules.
